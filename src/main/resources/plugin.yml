@@ -1,0 +1,4 @@
+name: ShinyItems
+main: io.github.sipsi133.ShinyItems
+author: sipsi133
+version: ${project.version}
