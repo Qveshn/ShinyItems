@@ -42,6 +42,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        reloadConfig();
         getServer().getPluginManager().registerEvents(this, this);
         instance = this;
     }
@@ -65,13 +66,23 @@ public class ShinyItems extends JavaPlugin implements Listener {
         if (e.getPlayer().getInventory().getItemInHand() != null
                 && isLightSource(e.getPlayer().getInventory().getItemInHand().getType())
         ) {
+            if (e.getPlayer().getLocation().add(0, -1, 0).getBlock().isLiquid()
+                    || e.getPlayer().getLocation().getBlock().isLiquid()
+            ) {
+                return;
+            }
             if (e.getPlayer().hasPermission("shinyitems.use") || !permsEnabled()) {
-                Location torchLoc = fakeTorchLoc(e.getPlayer(), e.getTo());
-                e.getPlayer().sendBlockChange(
-                        torchLoc,
-                        getLightlevel(e.getPlayer().getInventory().getItemInHand().getType()),
-                        (byte) 0);
-                lastLoc.put(e.getPlayer().getName(), torchLoc);
+                if (e.getPlayer().hasPermission("shinyitems.use."
+                        + e.getPlayer().getInventory().getItemInHand().getType().name().toLowerCase())
+                        || !itemPermsEnabled()
+                ) {
+                    Location torchLoc = fakeTorchLoc(e.getPlayer(), e.getTo());
+                    e.getPlayer().sendBlockChange(
+                            torchLoc,
+                            getLightlevel(e.getPlayer().getInventory().getItemInHand().getType()),
+                            (byte) 0);
+                    lastLoc.put(e.getPlayer().getName(), torchLoc);
+                }
             }
         }
     }
@@ -85,13 +96,23 @@ public class ShinyItems extends JavaPlugin implements Listener {
         if (e.getPlayer().getInventory().getItem(e.getNewSlot()) != null
                 && isLightSource(e.getPlayer().getInventory().getItem(e.getNewSlot()).getType())
         ) {
+            if (e.getPlayer().getLocation().add(0, -1, 0).getBlock().isLiquid()
+                    || e.getPlayer().getLocation().getBlock().isLiquid()
+            ) {
+                return;
+            }
             if (e.getPlayer().hasPermission("shinyitems.use") || !permsEnabled()) {
-                Location torchLoc = fakeTorchLoc(e.getPlayer(), e.getPlayer().getLocation());
-                e.getPlayer().sendBlockChange(
-                        torchLoc,
-                        getLightlevel(e.getPlayer().getInventory().getItemInHand().getType()),
-                        (byte) 0);
-                lastLoc.put(e.getPlayer().getName(), torchLoc);
+                if (e.getPlayer().hasPermission("shinyitems.use."
+                        + e.getPlayer().getInventory().getItemInHand().getType().name().toLowerCase())
+                        || !itemPermsEnabled()
+                ) {
+                    Location torchLoc = fakeTorchLoc(e.getPlayer(), e.getPlayer().getLocation());
+                    e.getPlayer().sendBlockChange(
+                            torchLoc,
+                            getLightlevel(e.getPlayer().getInventory().getItemInHand().getType()),
+                            (byte) 0);
+                    lastLoc.put(e.getPlayer().getName(), torchLoc);
+                }
             }
         }
     }
@@ -220,6 +241,10 @@ public class ShinyItems extends JavaPlugin implements Listener {
 
     public boolean permsEnabled() {
         return getConfig().getBoolean("enable-permissions");
+    }
+
+    public boolean itemPermsEnabled() {
+        return getConfig().getBoolean("enable-item-specific-permissions");
     }
 
     public Material getLightlevel(Material mat) {
