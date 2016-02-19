@@ -1,6 +1,7 @@
 # If enabled, players need permission shinyitems.use to see light that the items emit when held in hand.
 enable-permissions: false
 enable-item-specific-permissions: false
+distance-before-new-lightsource: 1
 
 # Material name before "=" is the material to emit light in hand. 
 # 

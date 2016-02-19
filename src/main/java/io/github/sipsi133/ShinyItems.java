@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 sipsi133
+ * Copyright (c) 2016 sipsi133
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -28,6 +28,7 @@ import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,6 +43,21 @@ public class ShinyItems extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         saveDefaultConfig();
+        reloadConfig();
+        getConfig().addDefault("enable-permissions", false);
+        getConfig().addDefault("enable-item-specific-permissions", false);
+        getConfig().addDefault("distance-before-new-lightsource", 1);
+        getConfig().addDefault("lightsources", Arrays.asList(
+                "REDSTONE_TORCH_ON=REDSTONE_TORCH_ON",
+                "REDSTONE_TORCH_OFF=REDSTONE_TORCH_ON",
+                "GLOWSTONE=TORCH",
+                "TORCH=TORCH",
+                "LAVA=TORCH",
+                "LAVA_BUCKET=TORCH"
+        ));
+        getConfig().options().copyDefaults(true);
+        getConfig().options().copyHeader(false);
+        saveConfig();
         reloadConfig();
         getServer().getPluginManager().registerEvents(this, this);
         instance = this;
@@ -60,12 +76,25 @@ public class ShinyItems extends JavaPlugin implements Listener {
             return;
         }
         if (lastLoc.containsKey(e.getPlayer().getName())) {
-            lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
-            lastLoc.remove(e.getPlayer().getName());
+            if (getDistanceToPrevious() == -1) {
+                lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+                lastLoc.remove(e.getPlayer().getName());
+            } else {
+                if (e.getPlayer().getLocation().distance(lastLoc.get(e.getPlayer().getName()))
+                        < (double) getDistanceToPrevious()
+                ) {
+                    return;
+                }
+                lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+                lastLoc.remove(e.getPlayer().getName());
+            }
         }
         if (e.getPlayer().getInventory().getItemInHand() != null
                 && isLightSource(e.getPlayer().getInventory().getItemInHand().getType())
         ) {
+            if (e.getTo().getBlock().getLightLevel() > 10) {
+                return;
+            }
             if (e.getPlayer().getLocation().add(0, -1, 0).getBlock().isLiquid()
                     || e.getPlayer().getLocation().getBlock().isLiquid()
             ) {
@@ -96,6 +125,9 @@ public class ShinyItems extends JavaPlugin implements Listener {
         if (e.getPlayer().getInventory().getItem(e.getNewSlot()) != null
                 && isLightSource(e.getPlayer().getInventory().getItem(e.getNewSlot()).getType())
         ) {
+            if (e.getPlayer().getLocation().getBlock().getLightLevel() > 10) {
+                return;
+            }
             if (e.getPlayer().getLocation().add(0, -1, 0).getBlock().isLiquid()
                     || e.getPlayer().getLocation().getBlock().isLiquid()
             ) {
@@ -118,54 +150,55 @@ public class ShinyItems extends JavaPlugin implements Listener {
     }
 
     public boolean isValid(Player p, Location loc) {
-        return !loc.getBlock().getType().equals(Material.WOOD_DOOR)
-                && !loc.getBlock().getType().equals(Material.WOODEN_DOOR)
-                && !loc.getBlock().getType().equals(Material.DARK_OAK_DOOR)
-                && !loc.getBlock().getType().equals(Material.BIRCH_DOOR)
-                && !loc.getBlock().getType().equals(Material.SPRUCE_DOOR)
-                && !loc.getBlock().getType().equals(Material.FENCE)
-                && !loc.getBlock().getType().equals(Material.FENCE_GATE)
-                && !loc.getBlock().getType().equals(Material.TRAP_DOOR)
-                && !loc.getBlock().getType().equals(Material.WOOD_STAIRS)
-                && !loc.getBlock().getType().equals(Material.BRICK_STAIRS)
-                && !loc.getBlock().getType().equals(Material.DARK_OAK_STAIRS)
-                && !loc.getBlock().getType().equals(Material.BIRCH_WOOD_STAIRS)
-                && !loc.getBlock().getType().equals(Material.SPRUCE_WOOD_STAIRS)
-                && !loc.getBlock().getType().equals(Material.WOOD_PLATE)
-                && !loc.getBlock().getType().equals(Material.STONE_PLATE)
-                && !loc.getBlock().getType().equals(Material.STONE_SLAB2)
-                && !loc.getBlock().getType().equals(Material.WOOD_STEP)
-                && !loc.getBlock().getType().equals(Material.ACACIA_DOOR)
-                && !loc.getBlock().getType().equals(Material.ACACIA_FENCE)
-                && !loc.getBlock().getType().equals(Material.ACACIA_FENCE_GATE)
-                && !loc.getBlock().getType().equals(Material.ACACIA_STAIRS)
-                && !loc.getBlock().getType().equals(Material.WEB)
-                && !loc.getBlock().getType().equals(Material.DAYLIGHT_DETECTOR)
-                && !loc.getBlock().getType().equals(Material.DAYLIGHT_DETECTOR_INVERTED)
-                && !loc.getBlock().getType().equals(Material.DIODE)
-                && !loc.getBlock().getType().equals(Material.DIODE_BLOCK_OFF)
-                && !loc.getBlock().getType().equals(Material.DIODE_BLOCK_ON)
-                && !loc.getBlock().getType().equals(Material.DOUBLE_STEP)
-                && !loc.getBlock().getType().equals(Material.DOUBLE_PLANT)
-                && !loc.getBlock().getType().equals(Material.DOUBLE_STONE_SLAB2)
-                && !loc.getBlock().getType().equals(Material.COBBLESTONE_STAIRS)
-                && !loc.getBlock().getType().equals(Material.COBBLE_WALL)
-                && !loc.getBlock().getType().equals(Material.SPRUCE_FENCE)
-                && !loc.getBlock().getType().equals(Material.SPRUCE_FENCE_GATE)
-                && !loc.getBlock().getType().equals(Material.BIRCH_FENCE)
-                && !loc.getBlock().getType().equals(Material.BIRCH_FENCE_GATE)
-                && !loc.getBlock().getType().equals(Material.DARK_OAK_FENCE)
-                && !loc.getBlock().getType().equals(Material.DARK_OAK_FENCE_GATE)
-                && !loc.getBlock().getType().equals(Material.LADDER)
-                && !loc.getBlock().getType().equals(Material.SNOW)
-                && !loc.getBlock().getType().equals(Material.WATER)
-                && !loc.getBlock().getType().equals(Material.WATER_LILY)
-                && !loc.getBlock().getType().equals(Material.LAVA)
-                && !loc.getBlock().getType().equals(Material.WEB)
-                && !loc.getBlock().getType().equals(Material.NETHER_BRICK_STAIRS)
-                && !loc.getBlock().getType().equals(Material.NETHER_FENCE)
-                && !loc.getBlock().getType().equals(Material.NETHER_WARTS)
-                && loc.getBlock().getType().equals(Material.AIR)
+        Material type = loc.getBlock().getType();
+        return !type.equals(Material.WOOD_DOOR)
+                && !type.equals(Material.WOODEN_DOOR)
+                && !type.equals(Material.DARK_OAK_DOOR)
+                && !type.equals(Material.BIRCH_DOOR)
+                && !type.equals(Material.SPRUCE_DOOR)
+                && !type.equals(Material.FENCE)
+                && !type.equals(Material.FENCE_GATE)
+                && !type.equals(Material.TRAP_DOOR)
+                && !type.equals(Material.WOOD_STAIRS)
+                && !type.equals(Material.BRICK_STAIRS)
+                && !type.equals(Material.DARK_OAK_STAIRS)
+                && !type.equals(Material.BIRCH_WOOD_STAIRS)
+                && !type.equals(Material.SPRUCE_WOOD_STAIRS)
+                && !type.equals(Material.WOOD_PLATE)
+                && !type.equals(Material.STONE_PLATE)
+                && !type.equals(Material.STONE_SLAB2)
+                && !type.equals(Material.WOOD_STEP)
+                && !type.equals(Material.ACACIA_DOOR)
+                && !type.equals(Material.ACACIA_FENCE)
+                && !type.equals(Material.ACACIA_FENCE_GATE)
+                && !type.equals(Material.ACACIA_STAIRS)
+                && !type.equals(Material.WEB)
+                && !type.equals(Material.DAYLIGHT_DETECTOR)
+                && !type.equals(Material.DAYLIGHT_DETECTOR_INVERTED)
+                && !type.equals(Material.DIODE)
+                && !type.equals(Material.DIODE_BLOCK_OFF)
+                && !type.equals(Material.DIODE_BLOCK_ON)
+                && !type.equals(Material.DOUBLE_STEP)
+                && !type.equals(Material.DOUBLE_PLANT)
+                && !type.equals(Material.DOUBLE_STONE_SLAB2)
+                && !type.equals(Material.COBBLESTONE_STAIRS)
+                && !type.equals(Material.COBBLE_WALL)
+                && !type.equals(Material.SPRUCE_FENCE)
+                && !type.equals(Material.SPRUCE_FENCE_GATE)
+                && !type.equals(Material.BIRCH_FENCE)
+                && !type.equals(Material.BIRCH_FENCE_GATE)
+                && !type.equals(Material.DARK_OAK_FENCE)
+                && !type.equals(Material.DARK_OAK_FENCE_GATE)
+                && !type.equals(Material.LADDER)
+                && !type.equals(Material.SNOW)
+                && !type.equals(Material.WATER)
+                && !type.equals(Material.WATER_LILY)
+                && !type.equals(Material.LAVA)
+                && !type.equals(Material.WEB)
+                && !type.equals(Material.NETHER_BRICK_STAIRS)
+                && !type.equals(Material.NETHER_FENCE)
+                && !type.equals(Material.NETHER_WARTS)
+                && type.equals(Material.AIR)
                 &&
                 (p.getEyeLocation().getBlockY() >= loc.getBlockY()
                         || loc.clone().add(0, -1, 0).getBlock().getType().equals(Material.AIR));
@@ -202,6 +235,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
                     list.add(Material.getMaterial(s.split("=")[0]));
                 }
             }
+            lightsources.addAll(list);
             return list;
         }
         return lightsources;
@@ -234,6 +268,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
                     }
                 }
             }
+            lightlevels.putAll(list);
             return list;
         }
         return lightlevels;
@@ -247,13 +282,13 @@ public class ShinyItems extends JavaPlugin implements Listener {
         return getConfig().getBoolean("enable-item-specific-permissions");
     }
 
+    public int getDistanceToPrevious() {
+        return getConfig().getInt("distance-before-new-lightsource");
+    }
+
     public Material getLightlevel(Material mat) {
-        if (isLightSource(mat)) {
-            for (Map.Entry<Material, Material> entry : getLightlevels().entrySet()) {
-                if (entry.getKey().equals(mat)) {
-                    return entry.getValue();
-                }
-            }
+        if (isLightSource(mat) && getLightlevels().containsKey(mat)) {
+            return getLightlevels().get(mat);
         }
         return Material.TORCH;
     }
