@@ -33,7 +33,10 @@ Original author: [sipsi133](https://github.com/sipsi133)
 
 - [Maven](https://maven.apache.org) (version 3.0 or higher)
 - [Bukkit](https://bukkit.org/) / [Spigot](https://www.spigotmc.org/)
+- [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
 
 ## Instructions to build
 
-Run the command from the root folder of the project: `mvn clear install`
+1. Download the appropriate version of [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
+   to the [lib](/lib) folder ([more info](/lib/readme.md))
+1. Run the command from the root folder of the project: `mvn clear install`

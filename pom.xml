@@ -6,11 +6,11 @@
 
     <groupId>io.github.sipsi133</groupId>
     <artifactId>ShinyItems</artifactId>
-    <version>1.2</version>
+    <version>1.3</version>
 
     <properties>
-        <maven.compiler.source>1.5</maven.compiler.source>
-        <maven.compiler.target>1.5</maven.compiler.target>
+        <maven.compiler.source>1.7</maven.compiler.source>
+        <maven.compiler.target>1.7</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     </properties>
 
@@ -26,6 +26,13 @@
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
             <version>1.8.8-R0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <groupId>ru.beykerykt</groupId>
+            <artifactId>lightapi</artifactId>
+            <version>1.4.2</version>
+            <scope>system</scope>
+            <systemPath>${project.basedir}/lib/LightAPI-1.4.2.jar</systemPath>
         </dependency>
     </dependencies>
 

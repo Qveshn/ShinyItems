@@ -25,7 +25,13 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import ru.BeYkeRYkt.LightAPI.ChunkInfo;
+import ru.BeYkeRYkt.LightAPI.LightAPI;
+import ru.BeYkeRYkt.LightAPI.LightRegistry;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -35,13 +41,34 @@ import java.util.Map;
 
 public class ShinyItems extends JavaPlugin implements Listener {
 
-    private Map<String, Location> lastLoc = new HashMap<String, Location>();
-    private List<Material> lightsources = new ArrayList<Material>();
-    private Map<Material, Material> lightlevels = new HashMap<Material, Material>();
+    private Map<String, Location> lastLoc = new HashMap<>();
+    private List<Material> lightsources = new ArrayList<>();
+    private Map<Material, Integer> lightlevels = new HashMap<>();
     public static ShinyItems instance = null;
+    private LightRegistry registry = null;
+
+    public boolean isLightAPI() {
+        return registry != null;
+    }
+
+    public static boolean isInteger(String s) {
+        try {
+            Integer.parseInt(s);
+        } catch (NumberFormatException e) {
+            return false;
+        } catch (NullPointerException e) {
+            return false;
+        }
+        return true;
+    }
 
     @Override
     public void onEnable() {
+        Plugin lightapi = getServer().getPluginManager().getPlugin("LightAPI");
+        if (lightapi != null) {
+            registry = LightAPI.getRegistry((Plugin) this);
+            registry.stopAutoSend();
+        }
         saveDefaultConfig();
         reloadConfig();
         getConfig().addDefault("enable-permissions", false);
@@ -57,8 +84,31 @@ public class ShinyItems extends JavaPlugin implements Listener {
         ));
         getConfig().options().copyDefaults(true);
         getConfig().options().copyHeader(false);
+
+        List<String> ls = getConfig().getStringList("lightsources");
+        List<String> newls = new ArrayList<>();
+        for (String s : ls) {
+            if (!isInteger(s.split("=")[1])) {
+                String str = s.split("=")[0];
+                int light = 0;
+                switch (str.toUpperCase()) {
+                    case "REDSTONE_TORCH_OFF":
+                    case "REDSTONE_TORCH_ON":
+                        light = 7;
+                        break;
+                    default:
+                        light = 14;
+                        break;
+                }
+                newls.add(str + "=" + light);
+            } else {
+                newls.add(s);
+            }
+        }
+        getConfig().set("lightsources", newls);
         saveConfig();
         reloadConfig();
+
         getServer().getPluginManager().registerEvents(this, this);
         instance = this;
     }
@@ -77,7 +127,11 @@ public class ShinyItems extends JavaPlugin implements Listener {
         }
         if (lastLoc.containsKey(e.getPlayer().getName())) {
             if (getDistanceToPrevious() == -1) {
-                lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+                if (isLightAPI()) {
+                    registry.deleteLight(lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                } else {
+                    lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+                }
                 lastLoc.remove(e.getPlayer().getName());
             } else {
                 if (e.getPlayer().getLocation().distance(lastLoc.get(e.getPlayer().getName()))
@@ -85,7 +139,15 @@ public class ShinyItems extends JavaPlugin implements Listener {
                 ) {
                     return;
                 }
-                lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+                if (isLightAPI()) {
+                    registry.deleteLight(lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                    List<ChunkInfo> list = registry.collectChunks(
+                            lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                    registry.sendChunks(list);
+                    registry.sendChunkChanges();
+                } else {
+                    lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+                }
                 lastLoc.remove(e.getPlayer().getName());
             }
         }
@@ -105,11 +167,21 @@ public class ShinyItems extends JavaPlugin implements Listener {
                         + e.getPlayer().getInventory().getItemInHand().getType().name().toLowerCase())
                         || !itemPermsEnabled()
                 ) {
-                    Location torchLoc = fakeTorchLoc(e.getPlayer(), e.getTo());
-                    e.getPlayer().sendBlockChange(
-                            torchLoc,
-                            getLightlevel(e.getPlayer().getInventory().getItemInHand().getType()),
-                            (byte) 0);
+                    Location torchLoc = e.getPlayer().getLocation();
+                    if (isLightAPI()) {
+                        registry.createLight(
+                                torchLoc,
+                                getLightlevel(e.getPlayer().getInventory().getItemInHand().getType()));
+                        List<ChunkInfo> list = registry.collectChunks(torchLoc);
+                        registry.sendChunks(list);
+                        registry.sendChunkChanges();
+                    } else {
+                        torchLoc = fakeTorchLoc(e.getPlayer(), e.getTo());
+                        e.getPlayer().sendBlockChange(
+                                torchLoc,
+                                getMLightlevel(e.getPlayer().getInventory().getItemInHand().getType()),
+                                (byte) 0);
+                    }
                     lastLoc.put(e.getPlayer().getName(), torchLoc);
                 }
             }
@@ -119,7 +191,15 @@ public class ShinyItems extends JavaPlugin implements Listener {
     @EventHandler
     public void onHeldItem(PlayerItemHeldEvent e) {
         if (lastLoc.containsKey(e.getPlayer().getName())) {
-            lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+            if (isLightAPI()) {
+                registry.deleteLight(lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                List<ChunkInfo> list = registry.collectChunks(
+                        lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                registry.sendChunks(list);
+                registry.sendChunkChanges();
+            } else {
+                lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+            }
             lastLoc.remove(e.getPlayer().getName());
         }
         if (e.getPlayer().getInventory().getItem(e.getNewSlot()) != null
@@ -138,14 +218,40 @@ public class ShinyItems extends JavaPlugin implements Listener {
                         + e.getPlayer().getInventory().getItemInHand().getType().name().toLowerCase())
                         || !itemPermsEnabled()
                 ) {
-                    Location torchLoc = fakeTorchLoc(e.getPlayer(), e.getPlayer().getLocation());
-                    e.getPlayer().sendBlockChange(
-                            torchLoc,
-                            getLightlevel(e.getPlayer().getInventory().getItemInHand().getType()),
-                            (byte) 0);
+                    Location torchLoc = e.getPlayer().getLocation();
+                    if (isLightAPI()) {
+                        registry.createLight(
+                                torchLoc,
+                                getLightlevel(e.getPlayer().getInventory().getItem(e.getNewSlot()).getType()));
+                        List<ChunkInfo> list = registry.collectChunks(torchLoc);
+                        registry.sendChunks(list);
+                        registry.sendChunkChanges();
+                    } else {
+                        torchLoc = fakeTorchLoc(e.getPlayer(), e.getPlayer().getLocation());
+                        e.getPlayer().sendBlockChange(
+                                torchLoc,
+                                getMLightlevel(e.getPlayer().getInventory().getItemInHand().getType()),
+                                (byte) 0);
+                    }
                     lastLoc.put(e.getPlayer().getName(), torchLoc);
                 }
             }
+        }
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent e) {
+        if (lastLoc.containsKey(e.getPlayer().getName())) {
+            if (isLightAPI()) {
+                registry.deleteLight(lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                List<ChunkInfo> list = registry.collectChunks(
+                        lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                registry.sendChunks(list);
+                registry.sendChunkChanges();
+            } else {
+                lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+            }
+            lastLoc.remove(e.getPlayer().getName());
         }
     }
 
@@ -227,7 +333,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
 
     public List<Material> getLightSources() {
         if (lightsources.isEmpty()) {
-            List<Material> list = new ArrayList<Material>();
+            List<Material> list = new ArrayList<>();
             for (String s : getConfig().getStringList("lightsources")) {
                 if (!s.contains("=")) {
                     list.add(Material.getMaterial(s));
@@ -235,8 +341,8 @@ public class ShinyItems extends JavaPlugin implements Listener {
                     list.add(Material.getMaterial(s.split("=")[0]));
                 }
             }
-            lightsources.addAll(list);
-            return list;
+            lightsources = list;
+            return lightsources;
         }
         return lightsources;
     }
@@ -245,31 +351,22 @@ public class ShinyItems extends JavaPlugin implements Listener {
         return getLightSources().contains(mat);
     }
 
-    public Map<Material, Material> getLightlevels() {
+    public Map<Material, Integer> getLightlevels() {
         if (lightlevels.isEmpty()) {
-            Map<Material, Material> list = new HashMap<Material, Material>();
+            Map<Material, Integer> list = new HashMap<>();
             for (String s : getConfig().getStringList("lightsources")) {
-                Material m;
+                Material m = null;
                 if (!s.contains("=")) {
                     m = Material.getMaterial(s);
-                    list.put(m, Material.TORCH);
+                    list.put(m, 14);
                 } else {
-                    m = Material.getMaterial(s.split("=")[1]);
-                    if (m.equals(Material.TORCH) || m.equals(Material.REDSTONE_TORCH_ON)
-                            || m.equals(Material.REDSTONE_TORCH_OFF)
-                    ) {
-                        if (m.equals(Material.REDSTONE_TORCH_OFF)) {
-                            list.put(Material.getMaterial(s.split("=")[0]), Material.REDSTONE_TORCH_ON);
-                        } else {
-                            list.put(Material.getMaterial(s.split("=")[0]), Material.getMaterial(s.split("=")[1]));
-                        }
-                    } else {
-                        list.put(Material.getMaterial(s.split("=")[0]), Material.TORCH);
-                    }
+                    m = Material.getMaterial(s.split("=")[0]);
+                    Integer light = Integer.valueOf(s.split("=")[1]);
+                    list.put(m, light);
                 }
             }
-            lightlevels.putAll(list);
-            return list;
+            lightlevels = list;
+            return lightlevels;
         }
         return lightlevels;
     }
@@ -286,9 +383,22 @@ public class ShinyItems extends JavaPlugin implements Listener {
         return getConfig().getInt("distance-before-new-lightsource");
     }
 
-    public Material getLightlevel(Material mat) {
+    public int getLightlevel(Material mat) {
         if (isLightSource(mat) && getLightlevels().containsKey(mat)) {
             return getLightlevels().get(mat);
+        }
+        return 14;
+    }
+
+    public Material getMLightlevel(Material mat) {
+        if (isLightSource(mat) && getLightlevels().containsKey(mat)) {
+            int m = getLightlevels().get(mat);
+            if (m >= 10) {
+                return Material.TORCH;
+            }
+            if (m < 10) {
+                return Material.REDSTONE_TORCH_ON;
+            }
         }
         return Material.TORCH;
     }

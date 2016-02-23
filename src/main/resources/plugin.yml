@@ -1,4 +1,5 @@
 name: ShinyItems
 main: io.github.sipsi133.ShinyItems
 author: sipsi133
+softdepend: [LightAPI]
 version: ${project.version}
