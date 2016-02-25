@@ -20,12 +20,14 @@ package io.github.sipsi133;
 
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerItemHeldEvent;
 import org.bukkit.event.player.PlayerMoveEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.event.player.PlayerToggleFlightEvent;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -33,6 +35,8 @@ import ru.BeYkeRYkt.LightAPI.ChunkInfo;
 import ru.BeYkeRYkt.LightAPI.LightAPI;
 import ru.BeYkeRYkt.LightAPI.LightRegistry;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -42,8 +46,9 @@ import java.util.Map;
 public class ShinyItems extends JavaPlugin implements Listener {
 
     private Map<String, Location> lastLoc = new HashMap<>();
-    private List<Material> lightsources = new ArrayList<>();
-    private Map<Material, Integer> lightlevels = new HashMap<>();
+    public List<Material> lightsources = new ArrayList<>();
+    public Map<Material, Integer> lightlevels = new HashMap<>();
+    public List<String> disabledPlayers = new ArrayList<>();
     public static ShinyItems instance = null;
     private LightRegistry registry = null;
 
@@ -62,6 +67,11 @@ public class ShinyItems extends JavaPlugin implements Listener {
         return true;
     }
 
+    public boolean isToggledOn(Player p) {
+        return !disabledPlayers.contains(p.getName());
+    }
+
+    @SuppressWarnings("unchecked")
     @Override
     public void onEnable() {
         Plugin lightapi = getServer().getPluginManager().getPlugin("LightAPI");
@@ -75,16 +85,50 @@ public class ShinyItems extends JavaPlugin implements Listener {
         getConfig().addDefault("enable-item-specific-permissions", false);
         getConfig().addDefault("distance-before-new-lightsource", 1);
         getConfig().addDefault("lightsources", Arrays.asList(
-                "REDSTONE_TORCH_ON=REDSTONE_TORCH_ON",
-                "REDSTONE_TORCH_OFF=REDSTONE_TORCH_ON",
-                "GLOWSTONE=TORCH",
-                "TORCH=TORCH",
-                "LAVA=TORCH",
-                "LAVA_BUCKET=TORCH"
+                "REDSTONE_TORCH_ON=7",
+                "REDSTONE_TORCH_OFF=7",
+                "GLOWSTONE=14",
+                "TORCH=14",
+                "LAVA=14",
+                "LAVA_BUCKET=14"
         ));
         getConfig().options().copyDefaults(true);
         getConfig().options().copyHeader(false);
+        fixConfig();
+        File file = new File(getDataFolder(), "toggled_players.yml");
+        if (file.exists()) {
+            YamlConfiguration players = YamlConfiguration.loadConfiguration(file);
+            disabledPlayers.addAll((List<String>) players.getList("Toggled"));
+        }
+        getServer().getPluginManager().registerEvents(this, this);
+        getCommand("shinyitems").setExecutor(new Commands(this));
+        instance = this;
+    }
 
+    @Override
+    public void onDisable() {
+        for (Map.Entry<String, Location> entry : lastLoc.entrySet()) {
+            registry.deleteLight(entry.getValue());
+        }
+        try {
+            File file = new File(getDataFolder(), "toggled_players.yml");
+            if (file.exists()) {
+                file.delete();
+            }
+            file.createNewFile();
+            YamlConfiguration players = YamlConfiguration.loadConfiguration(file);
+            players.set("Toggled", disabledPlayers);
+            players.save(file);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static ShinyItems getInstance() {
+        return instance;
+    }
+
+    public void fixConfig() {
         List<String> ls = getConfig().getStringList("lightsources");
         List<String> newls = new ArrayList<>();
         for (String s : ls) {
@@ -108,27 +152,18 @@ public class ShinyItems extends JavaPlugin implements Listener {
         getConfig().set("lightsources", newls);
         saveConfig();
         reloadConfig();
-
-        getServer().getPluginManager().registerEvents(this, this);
-        instance = this;
-    }
-
-    public static ShinyItems getInstance() {
-        return instance;
     }
 
     @EventHandler
-    public void onMove(PlayerMoveEvent e) {
-        if (e.getTo().getBlockX() == e.getFrom().getBlockX()
-                && e.getTo().getBlockY() == e.getFrom().getBlockY()
-                && e.getTo().getBlockZ() == e.getFrom().getBlockZ()
-        ) {
-            return;
-        }
+    public void onFlight(PlayerToggleFlightEvent e) {
         if (lastLoc.containsKey(e.getPlayer().getName())) {
             if (getDistanceToPrevious() == -1) {
                 if (isLightAPI()) {
                     registry.deleteLight(lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                    List<ChunkInfo> list = registry.collectChunks(
+                            lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                    registry.sendChunks(list);
+                    registry.sendChunkChanges();
                 } else {
                     lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
                 }
@@ -150,6 +185,56 @@ public class ShinyItems extends JavaPlugin implements Listener {
                 }
                 lastLoc.remove(e.getPlayer().getName());
             }
+        }
+    }
+
+    @EventHandler
+    public void onMove(PlayerMoveEvent e) {
+        if (e.getTo().getBlockX() == e.getFrom().getBlockX()
+                && e.getTo().getBlockY() == e.getFrom().getBlockY()
+                && e.getTo().getBlockZ() == e.getFrom().getBlockZ()
+        ) {
+            return;
+        }
+        if (lastLoc.containsKey(e.getPlayer().getName())) {
+            if (getDistanceToPrevious() == -1) {
+                if (isLightAPI()) {
+                    registry.deleteLight(lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                    if (!isToggledOn(e.getPlayer())) {
+                        List<ChunkInfo> list = registry.collectChunks(
+                                lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                        registry.sendChunks(list);
+                        registry.sendChunkChanges();
+                    }
+                } else {
+                    lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+                }
+                lastLoc.remove(e.getPlayer().getName());
+            } else {
+                if (e.getPlayer().getLocation().distance(lastLoc.get(e.getPlayer().getName()))
+                        < (double) getDistanceToPrevious()
+                ) {
+                    return;
+                }
+                if (isLightAPI()) {
+                    registry.deleteLight(lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                    if (!isToggledOn(e.getPlayer())) {
+                        List<ChunkInfo> list = registry.collectChunks(
+                                lastLoc.get(e.getPlayer().getName()).getBlock().getLocation());
+                        registry.sendChunks(list);
+                        registry.sendChunkChanges();
+                    }
+                } else {
+                    lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+                }
+                lastLoc.remove(e.getPlayer().getName());
+            }
+        }
+        if (e.getPlayer().isFlying()) {
+            return;
+        }
+        if (!isToggledOn(e.getPlayer())) {
+            return;
         }
         if (e.getPlayer().getInventory().getItemInHand() != null
                 && isLightSource(e.getPlayer().getInventory().getItemInHand().getType())
@@ -201,6 +286,12 @@ public class ShinyItems extends JavaPlugin implements Listener {
                 lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
             }
             lastLoc.remove(e.getPlayer().getName());
+        }
+        if (e.getPlayer().isFlying()) {
+            return;
+        }
+        if (!isToggledOn(e.getPlayer())) {
+            return;
         }
         if (e.getPlayer().getInventory().getItem(e.getNewSlot()) != null
                 && isLightSource(e.getPlayer().getInventory().getItem(e.getNewSlot()).getType())
