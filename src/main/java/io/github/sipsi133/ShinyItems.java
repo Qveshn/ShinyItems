@@ -169,7 +169,9 @@ public class ShinyItems extends JavaPlugin implements Listener {
                 }
                 lastLoc.remove(e.getPlayer().getName());
             } else {
-                if (e.getPlayer().getLocation().distance(lastLoc.get(e.getPlayer().getName()))
+                if (e.getPlayer().getLocation().getWorld().getName()
+                        .equals(lastLoc.get(e.getPlayer().getName()).getWorld().getName())
+                        && e.getPlayer().getLocation().distance(lastLoc.get(e.getPlayer().getName()))
                         < (double) getDistanceToPrevious()
                 ) {
                     return;
@@ -211,7 +213,9 @@ public class ShinyItems extends JavaPlugin implements Listener {
                 }
                 lastLoc.remove(e.getPlayer().getName());
             } else {
-                if (e.getPlayer().getLocation().distance(lastLoc.get(e.getPlayer().getName()))
+                if (e.getPlayer().getLocation().getWorld().getName()
+                        .equals(lastLoc.get(e.getPlayer().getName()).getWorld().getName())
+                        && e.getPlayer().getLocation().distance(lastLoc.get(e.getPlayer().getName()))
                         < (double) getDistanceToPrevious()
                 ) {
                     return;
