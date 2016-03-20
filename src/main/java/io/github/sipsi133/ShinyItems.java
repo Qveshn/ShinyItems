@@ -83,12 +83,16 @@ public class ShinyItems extends JavaPlugin implements Listener {
         Plugin lightapi = getServer().getPluginManager().getPlugin("LightAPI");
         if (lightapi != null) {
             if (!Bukkit.getVersion().contains("MC: 1.9")) {
-                registry = LightAPI.getRegistry(this);
-                registry.stopAutoSend();
-                is19version = false;
-                getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI (Spigot 1.8");
+                try {
+                    registry = LightAPI.getRegistry(this);
+                    registry.stopAutoSend();
+                    is19version = false;
+                    getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI (Spigot 1.8");
+                } catch (NoClassDefFoundError exc) {
+                    getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI 2.0.0 (Spigot 1.8");
+                }
             } else {
-                getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI (Spigot 1.9");
+                getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI 2.0.0 (Spigot 1.9");
             }
         } else {
             lightApiEnabled = false;
