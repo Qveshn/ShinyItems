@@ -37,6 +37,6 @@ Original author: [sipsi133](https://github.com/sipsi133)
 
 ## Instructions to build
 
-1. Download the appropriate version of [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
+1. Download the appropriate versions of [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
    to the [lib](/lib) folder ([more info](/lib/readme.md))
 1. Run the command from the root folder of the project: `mvn clear install`

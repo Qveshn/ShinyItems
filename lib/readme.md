@@ -8,6 +8,7 @@ Download the appropriate plugin version and rename it properly according to the 
 
 | Version | Date         | File to download and rename to |
 |---------|--------------|--------------------------------|
+| 2.0.0   | Mar 19, 2016 | [LightAPI-2.0.0-experimentalDev.jar](https://www.dropbox.com/s/k7ikz8hfvixbzp3/LightAPI-2.0.0-experimentalDev.jar?dl=0) |
 | 1.4.2   | Aug 26, 2015 | [LightAPI-1.4.2.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=41543) |
 | 1.4.1   | Aug 21, 2015 | [LightAPI-1.4.1.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=40718) |
 | 1.3.1   | Jun 3, 2015  | [LightAPI-1.3.1.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=27912) |
