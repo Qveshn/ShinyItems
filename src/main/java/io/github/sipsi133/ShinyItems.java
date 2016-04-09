@@ -222,7 +222,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
             return;
         }
         if (lastLoc.containsKey(e.getPlayer().getName())) {
-            if (getDistanceToPrevious() == -1) {
+            if (getDistanceToPrevious() == -1 || isLightAPI()) {
                 if (isLightAPI()) {
                     deleteLight(e.getPlayer(), !e.getPlayer().isFlying());
                 } else {
@@ -323,18 +323,18 @@ public class ShinyItems extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onHeldItem(final PlayerItemHeldEvent e) {
+        if (lastLoc.containsKey(e.getPlayer().getName())) {
+            if (isLightAPI()) {
+                deleteLight(e.getPlayer(), false);
+            } else {
+                lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
+            }
+            lastLoc.remove(e.getPlayer().getName());
+        }
         Bukkit.getServer().getScheduler().scheduleSyncDelayedTask(this, new Runnable() {
 
             @Override
             public void run() {
-                if (lastLoc.containsKey(e.getPlayer().getName())) {
-                    if (isLightAPI()) {
-                        deleteLight(e.getPlayer(), false);
-                    } else {
-                        lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
-                    }
-                    lastLoc.remove(e.getPlayer().getName());
-                }
                 if (e.getPlayer().isFlying()) {
                     return;
                 }
@@ -529,7 +529,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
             List<ChunkInfo> list = registry.collectChunks(torchLoc);
             registry.sendChunks(list);
             registry.sendChunkChanges();
-        } else {
+        } else if (is19version) {
             Lights.createLight(
                     torchLoc,
                     !offHand
@@ -539,11 +539,16 @@ public class ShinyItems extends JavaPlugin implements Listener {
             for (ru.beykerykt.lightapi.chunks.ChunkInfo info : Chunks.collectModifiedChunks(torchLoc)) {
                 Chunks.sendChunkUpdate(info);
             }
+        } else {
+            Lights.createLight(torchLoc, getLightlevel(p.getInventory().getItemInHand().getType()), false);
+            for (ru.beykerykt.lightapi.chunks.ChunkInfo info : Chunks.collectModifiedChunks(torchLoc)) {
+                Chunks.sendChunkUpdate(info);
+            }
         }
     }
 
     public void deleteLight(Player p, boolean checkToggle) {
-        Location loc = lastLoc.get(p.getName()).getBlock().getLocation();
+        Location loc = lastLoc.get(p.getName());
         if (!is19version && registry != null) {
             registry.deleteLight(loc);
             if (checkToggle && !isToggledOn(p) || !checkToggle) {
