@@ -83,14 +83,12 @@ public class ShinyItems extends JavaPlugin implements Listener {
                 is19version = false;
                 getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI (Spigot 1.8.X");
             } else {
-                getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI (Spigot 1.9.X or 1.9.10");
+                getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI (Spigot 1.9.X or greater)");
             }
         } else {
-            if (!Bukkit.getVersion().contains("MC: 1.9") && !Bukkit.getVersion().contains("MC: 1.10")) {
-                is19version = false;
-            }
-            lightApiEnabled = false;
-            getLogger().log(Level.INFO, "Enabled ShinyItems! Using own packet system to spawn lights.");
+            getLogger().log(Level.SEVERE,
+                    "LightAPI not found! Download LightAPI in order to use ShinyItems. Disabling...");
+            getServer().getPluginManager().disablePlugin(this);
         }
         saveDefaultConfig();
         reloadConfig();
@@ -122,48 +120,49 @@ public class ShinyItems extends JavaPlugin implements Listener {
             @Override
             public void run() {
                 for (Player p : Bukkit.getOnlinePlayers()) {
-                    if (i == 0 || i % 2 == 0) {
-                        if (lastLoc.containsKey(p.getName())) {
-                            instance.deleteLight(p, false);
-                            if (!instance.is19version) {
-                                if (!instance.isLightSource(instance.getItemInHand(p))) {
-                                    instance.update(p);
-                                    lastLoc.remove(p.getName());
-                                }
-                            } else {
-                                if (!instance.isLightSource(instance.getItemInMainHand(p))
-                                        && !instance.isLightSource(instance.getItemInOffHand(p))
-                                ) {
-                                    instance.update(p);
-                                    lastLoc.remove(p.getName());
-                                }
-                            }
-                        }
-                    } else {
-                        if (p.isFlying()) {
-                            return;
-                        }
-                        if (!instance.is19version) {
-                            if (instance.isLightSource(instance.getItemInHand(p))) {
-                                lastLoc.put(p.getName(), p.getLocation());
-                                instance.createLight(p.getLocation(), p, true, false);
-                                instance.update(p);
-                            }
-                        } else {
-                            if (instance.isLightSource(instance.getItemInMainHand(p))
-                                    || instance.isLightSource(instance.getItemInOffHand(p))
-                            ) {
-                                lastLoc.put(p.getName(), p.getLocation());
-                                instance.createLight(p.getLocation(), p, true,
-                                        instance.isLightSource(instance.getItemInOffHand(p)));
-                                instance.update(p);
-                            }
-                        }
-                    }
+                    handleRemove(p);
+                    handleCreate(p);
                 }
                 ++i;
             }
         }, 100L, 10L);
+    }
+
+    public void handleRemove(Player p) {
+        if (lastLoc.containsKey(p.getName())) {
+            instance.deleteLight(p, false);
+            if (!instance.is19version) {
+                if (!instance.isLightSource(instance.getItemInHand(p))) {
+                    instance.update(p);
+                    lastLoc.remove(p.getName());
+                }
+            } else {
+                if (!instance.isLightSource(instance.getItemInMainHand(p))
+                        && !instance.isLightSource(instance.getItemInOffHand(p))
+                ) {
+                    instance.update(p);
+                    lastLoc.remove(p.getName());
+                }
+            }
+        }
+    }
+
+    public void handleCreate(Player p) {
+        if (!instance.is19version) {
+            if (instance.isLightSource(instance.getItemInHand(p))) {
+                lastLoc.put(p.getName(), p.getLocation());
+                instance.createLight(p.getLocation(), p, true, false);
+                instance.update(p);
+            }
+        } else {
+            if (instance.isLightSource(instance.getItemInMainHand(p))
+                    || instance.isLightSource(instance.getItemInOffHand(p))
+            ) {
+                lastLoc.put(p.getName(), p.getLocation());
+                instance.createLight(p.getLocation(), p, true, instance.isLightSource(instance.getItemInOffHand(p)));
+                instance.update(p);
+            }
+        }
     }
 
     public Material getItemInHand(Player p) {
@@ -246,14 +245,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
 
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        if (lastLoc.containsKey(e.getPlayer().getName())) {
-            if (isLightAPI()) {
-                deleteLight(e.getPlayer(), false);
-            } else {
-                lastLoc.get(e.getPlayer().getName()).getBlock().getState().update();
-            }
-            lastLoc.remove(e.getPlayer().getName());
-        }
+        handleRemove(e.getPlayer());
     }
 
     public boolean isValid(Player p, Location loc) {
@@ -406,14 +398,14 @@ public class ShinyItems extends JavaPlugin implements Listener {
             }
         } catch (NoClassDefFoundError e) {
             for (ChunkInfo info :
-                    ru.beykerykt.lightapi.LightAPI.collectChunks(
+                    LightAPI.collectChunks(
                             loc.getWorld(),
                             loc.getBlockX(),
                             loc.getBlockY(),
                             loc.getBlockZ())
             ) {
                 if (info != null) {
-                    ru.beykerykt.lightapi.LightAPI.updateChunk(info);
+                    LightAPI.updateChunk(info);
                 }
             }
         }
