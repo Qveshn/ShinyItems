@@ -6,7 +6,7 @@
 
     <groupId>io.github.sipsi133</groupId>
     <artifactId>ShinyItems</artifactId>
-    <version>1.5.5</version>
+    <version>1.5.6</version>
 
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
@@ -30,9 +30,9 @@
         <dependency>
             <groupId>ru.beykerykt</groupId>
             <artifactId>lightapi-3</artifactId>
-            <version>3.2.2</version>
+            <version>3.2.3</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/LightAPI-3.2.2.jar</systemPath>
+            <systemPath>${project.basedir}/lib/LightAPI-3.2.3.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>ru.beykerykt</groupId>

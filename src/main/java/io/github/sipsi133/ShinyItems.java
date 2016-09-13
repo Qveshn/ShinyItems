@@ -121,6 +121,9 @@ public class ShinyItems extends JavaPlugin implements Listener {
             public void run() {
                 for (Player p : Bukkit.getOnlinePlayers()) {
                     handleRemove(p);
+                    if (!isToggledOn(p)) {
+                        return;
+                    }
                     handleCreate(p);
                 }
                 ++i;
@@ -150,6 +153,16 @@ public class ShinyItems extends JavaPlugin implements Listener {
     public void handleCreate(Player p) {
         if (!instance.is19version) {
             if (instance.isLightSource(instance.getItemInHand(p))) {
+                if (permsEnabled()) {
+                    if (!p.hasPermission("shinyitems.use")) {
+                        return;
+                    }
+                    if (itemPermsEnabled()) {
+                        if (!p.hasPermission("shinyitems.use." + instance.getItemInHand(p).toString().toLowerCase())) {
+                            return;
+                        }
+                    }
+                }
                 lastLoc.put(p.getName(), p.getLocation());
                 instance.createLight(p.getLocation(), p, true, false);
                 instance.update(p);
@@ -158,6 +171,16 @@ public class ShinyItems extends JavaPlugin implements Listener {
             if (instance.isLightSource(instance.getItemInMainHand(p))
                     || instance.isLightSource(instance.getItemInOffHand(p))
             ) {
+                if (permsEnabled()) {
+                    if (!p.hasPermission("shinyitems.use")) {
+                        return;
+                    }
+                    if (itemPermsEnabled()) {
+                        if (!p.hasPermission("shinyitems.use." + instance.getItemInHand(p).toString().toLowerCase())) {
+                            return;
+                        }
+                    }
+                }
                 lastLoc.put(p.getName(), p.getLocation());
                 instance.createLight(p.getLocation(), p, true, instance.isLightSource(instance.getItemInOffHand(p)));
                 instance.update(p);
