@@ -22,10 +22,12 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
@@ -48,9 +50,8 @@ import java.util.logging.Level;
 public class ShinyItems extends JavaPlugin implements Listener {
 
     private Map<String, Location> lastLoc = new HashMap<>();
-    public List<Material> lightsources = new ArrayList<>();
-    public Map<Material, Integer> lightlevels = new HashMap<>();
     public List<String> disabledPlayers = new ArrayList<>();
+    public List<ShinyItem> shinyItemList = new ArrayList<>();
     public static ShinyItems instance = null;
     private boolean lightApiEnabled = true;
     private boolean is19version = true;
@@ -90,22 +91,22 @@ public class ShinyItems extends JavaPlugin implements Listener {
                     "LightAPI not found! Download LightAPI in order to use ShinyItems. Disabling...");
             getServer().getPluginManager().disablePlugin(this);
         }
-        saveDefaultConfig();
+        ConfigurationSerialization.registerClass(ShinyItem.class);
         reloadConfig();
         getConfig().addDefault("enable-permissions", false);
         getConfig().addDefault("enable-item-specific-permissions", false);
         getConfig().addDefault("distance-before-new-lightsource", 1);
         getConfig().addDefault("lightsources", Arrays.asList(
-                "REDSTONE_TORCH_ON=7",
-                "REDSTONE_TORCH_OFF=7",
-                "GLOWSTONE=14",
-                "TORCH=14",
-                "LAVA=14",
-                "LAVA_BUCKET=14"
+                new ShinyItem(Material.REDSTONE_TORCH_ON, 7, -1, false),
+                new ShinyItem(Material.REDSTONE_TORCH_OFF, 7, -1, false),
+                new ShinyItem(Material.GLOWSTONE, 14, -1, false),
+                new ShinyItem(Material.TORCH, 14, -1, false),
+                new ShinyItem(Material.LAVA, 14, -1, false),
+                new ShinyItem(Material.LAVA_BUCKET, 14, -1, false)
         ));
         getConfig().options().copyDefaults(true);
         getConfig().options().copyHeader(false);
-        fixConfig();
+        saveConfig();
         File file = new File(getDataFolder(), "toggled_players.yml");
         if (file.exists()) {
             YamlConfiguration players = YamlConfiguration.loadConfiguration(file);
@@ -188,25 +189,25 @@ public class ShinyItems extends JavaPlugin implements Listener {
         }
     }
 
-    public Material getItemInHand(Player p) {
+    public ItemStack getItemInHand(Player p) {
         if (p.getItemInHand() == null) {
-            return Material.AIR;
+            return new ItemStack(Material.AIR);
         }
-        return p.getItemInHand().getType();
+        return p.getItemInHand();
     }
 
-    public Material getItemInMainHand(Player p) {
+    public ItemStack getItemInMainHand(Player p) {
         if (p.getInventory().getItemInMainHand() == null) {
-            return Material.AIR;
+            return new ItemStack(Material.AIR);
         }
-        return p.getInventory().getItemInMainHand().getType();
+        return p.getInventory().getItemInMainHand();
     }
 
-    public Material getItemInOffHand(Player p) {
+    public ItemStack getItemInOffHand(Player p) {
         if (p.getInventory().getItemInOffHand() == null) {
-            return Material.AIR;
+            return new ItemStack(Material.AIR);
         }
-        return p.getInventory().getItemInOffHand().getType();
+        return p.getInventory().getItemInOffHand();
     }
 
     @Override
@@ -347,24 +348,31 @@ public class ShinyItems extends JavaPlugin implements Listener {
         return loc;
     }
 
-    public List<Material> getLightSources() {
-        if (lightsources.isEmpty()) {
-            List<Material> list = new ArrayList<>();
-            for (String s : getConfig().getStringList("lightsources")) {
-                if (!s.contains("=")) {
-                    list.add(Material.getMaterial(s));
-                } else {
-                    list.add(Material.getMaterial(s.split("=")[0]));
-                }
+    public List<ShinyItem> getLightSources() {
+        if (shinyItemList.isEmpty()) {
+            List<ShinyItem> list = new ArrayList<>();
+            for (Object s : getConfig().getList("lightsources")) {
+                list.add((ShinyItem) s);
             }
-            lightsources = list;
-            return lightsources;
+            shinyItemList = list;
+            return shinyItemList;
         }
-        return lightsources;
+        return shinyItemList;
     }
 
-    public boolean isLightSource(Material mat) {
-        return getLightSources().contains(mat);
+    public boolean isLightSource(ItemStack mat) {
+        for (ShinyItem si : getLightSources()) {
+            if (!si.getMaterial().equals(mat.getType()))
+                continue;
+            if (si.getDurability() != -1 && si.getDurability() != mat.getDurability())
+                continue;
+            if (si.isUnbreakable() && !mat.hasItemMeta())
+                continue;
+            if (si.isUnbreakable() != mat.getItemMeta().spigot().isUnbreakable())
+                continue;
+            return true;
+        }
+        return false;
     }
 
     public void createLight(Location torchLoc, Player p, boolean checkToggle, boolean offHand) {
@@ -451,26 +459,6 @@ public class ShinyItems extends JavaPlugin implements Listener {
         }
     }
 
-    public Map<Material, Integer> getLightlevels() {
-        if (lightlevels.isEmpty()) {
-            Map<Material, Integer> list = new HashMap<>();
-            for (String s : getConfig().getStringList("lightsources")) {
-                Material m = null;
-                if (!s.contains("=")) {
-                    m = Material.getMaterial(s);
-                    list.put(m, 14);
-                } else {
-                    m = Material.getMaterial(s.split("=")[0]);
-                    Integer light = Integer.valueOf(s.split("=")[1]);
-                    list.put(m, light);
-                }
-            }
-            lightlevels = list;
-            return lightlevels;
-        }
-        return lightlevels;
-    }
-
     public boolean permsEnabled() {
         return getConfig().getBoolean("enable-permissions");
     }
@@ -484,22 +472,11 @@ public class ShinyItems extends JavaPlugin implements Listener {
     }
 
     public int getLightlevel(Material mat) {
-        if (isLightSource(mat) && getLightlevels().containsKey(mat)) {
-            return getLightlevels().get(mat);
+        for (ShinyItem si : getLightSources()) {
+            if (si.getMaterial().equals(mat)) {
+                return si.getLightLevel();
+            }
         }
         return 14;
-    }
-
-    public Material getMLightlevel(Material mat) {
-        if (isLightSource(mat) && getLightlevels().containsKey(mat)) {
-            int m = getLightlevels().get(mat);
-            if (m >= 10) {
-                return Material.TORCH;
-            }
-            if (m < 10) {
-                return Material.REDSTONE_TORCH_ON;
-            }
-        }
-        return Material.TORCH;
     }
 }

@@ -37,9 +37,7 @@ public class Commands implements CommandExecutor {
             if (args[0].equalsIgnoreCase("reload")) {
                 if (sender.isOp() || sender.hasPermission("shinyitems.reload")) {
                     plugin.reloadConfig();
-                    plugin.fixConfig();
-                    plugin.lightlevels.clear();
-                    plugin.lightsources.clear();
+                    plugin.shinyItemList.clear();
                     sender.sendMessage("§aShinyItems configuration reloaded!");
                 }
             } else if (args[0].equalsIgnoreCase("toggle")) {

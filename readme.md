@@ -3,7 +3,7 @@
 ShinyItems
 ==========
 Enlighten your way with shiny items.  
-Bukkit/Spigot plugin for Minecraft server 1.8, 1.9, 1.10.
+Spigot plugin for Minecraft server 1.8, 1.9, 1.10.
 
 Original author: [sipsi133](https://github.com/sipsi133)  
 [SPIGOT RESOURCE](https://www.spigotmc.org/resources/shinyitems-1-8-x-1-12-x.12531/)
@@ -32,7 +32,7 @@ Original author: [sipsi133](https://github.com/sipsi133)
 ## Dependencies
 
 - [Maven](https://maven.apache.org) (version 3.0 or higher)
-- [Bukkit](https://bukkit.org/) / [Spigot](https://www.spigotmc.org/)
+- [Spigot](https://www.spigotmc.org/)
 - [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
 
 ## Instructions to build
