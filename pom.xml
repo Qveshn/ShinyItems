@@ -6,7 +6,7 @@
 
     <groupId>io.github.sipsi133</groupId>
     <artifactId>ShinyItems</artifactId>
-    <version>1.6.0</version>
+    <version>1.6.1</version>
 
     <properties>
         <maven.compiler.source>1.7</maven.compiler.source>
@@ -25,21 +25,24 @@
         <dependency>
             <groupId>org.spigotmc</groupId>
             <artifactId>spigot-api</artifactId>
-            <version>1.10.2-R0.1-SNAPSHOT</version>
+            <version>1.11-R0.1-SNAPSHOT</version>
+        </dependency>
+        <dependency>
+            <!--
+              To get the appropriate version of CraftBukkit/Spigot server in your local maven repository
+              download BuildTools.jar here: (https://hub.spigotmc.org/jenkins/job/BuildTools)
+              and run the command: java -jar BuildTools.jar -r 1.11
+            -->
+            <groupId>org.bukkit</groupId>
+            <artifactId>craftbukkit</artifactId>
+            <version>1.11-R0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>ru.beykerykt</groupId>
-            <artifactId>lightapi-3</artifactId>
+            <artifactId>lightapi</artifactId>
             <version>3.2.3</version>
             <scope>system</scope>
             <systemPath>${project.basedir}/lib/LightAPI-3.2.3.jar</systemPath>
-        </dependency>
-        <dependency>
-            <groupId>ru.beykerykt</groupId>
-            <artifactId>lightapi-2</artifactId>
-            <version>2.0.1</version>
-            <scope>system</scope>
-            <systemPath>${project.basedir}/lib/LightAPI-2.0.1.jar</systemPath>
         </dependency>
     </dependencies>
 

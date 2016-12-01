@@ -3,7 +3,7 @@
 ShinyItems
 ==========
 Enlighten your way with shiny items.  
-Spigot plugin for Minecraft server 1.8, 1.9, 1.10.
+Spigot plugin for Minecraft server 1.8, 1.9, 1.10, 1.11.
 
 Original author: [sipsi133](https://github.com/sipsi133)  
 [SPIGOT RESOURCE](https://www.spigotmc.org/resources/shinyitems-1-8-x-1-12-x.12531/)
@@ -37,6 +37,9 @@ Original author: [sipsi133](https://github.com/sipsi133)
 
 ## Instructions to build
 
-1. Download the appropriate versions of [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
+1. Build CraftBukkit server using [BuildToolsJar.jar](https://hub.spigotmc.org/jenkins/job/BuildTools/):
+   `java -jar BuildTools.jar --rev 1.11`  
+   *It will be added to your local maven repository.*
+1. Download the appropriate version of [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
    to the [lib](/lib) folder ([more info](/lib/readme.md))
 1. Run the command from the root folder of the project: `mvn clear install`

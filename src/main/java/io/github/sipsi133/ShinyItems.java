@@ -34,12 +34,17 @@ import org.bukkit.scheduler.BukkitRunnable;
 
 import ru.beykerykt.lightapi.LightAPI;
 import ru.beykerykt.lightapi.chunks.ChunkInfo;
-import ru.beykerykt.lightapi.chunks.Chunks;
-import ru.beykerykt.lightapi.light.LightDataRequest;
-import ru.beykerykt.lightapi.light.Lights;
+
+import ru.beykerykt.lightapi.server.ServerModInfo;
+import ru.beykerykt.lightapi.server.ServerModManager;
+import ru.beykerykt.lightapi.server.nms.craftbukkit.CraftBukkit_v1_10_R1;
+import ru.beykerykt.lightapi.server.nms.craftbukkit.CraftBukkit_v1_8_R3;
+import ru.beykerykt.lightapi.server.nms.craftbukkit.CraftBukkit_v1_9_R1;
+import ru.beykerykt.lightapi.server.nms.craftbukkit.CraftBukkit_v1_9_R2;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -53,8 +58,8 @@ public class ShinyItems extends JavaPlugin implements Listener {
     public List<String> disabledPlayers = new ArrayList<>();
     public List<ShinyItem> shinyItemList = new ArrayList<>();
     public static ShinyItems instance = null;
+    public static boolean is19version = true;
     private boolean lightApiEnabled = true;
-    private boolean is19version = true;
 
     public boolean isLightAPI() {
         return lightApiEnabled;
@@ -79,13 +84,57 @@ public class ShinyItems extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         Plugin lightapi = getServer().getPluginManager().getPlugin("LightAPI");
+        String version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
         if (lightapi != null) {
-            if (!Bukkit.getVersion().contains("MC: 1.9") && !Bukkit.getVersion().contains("MC: 1.10")) {
+            String tmp = version.split("_")[1];
+            double last = Double.valueOf(tmp);
+            if (last < 9) {
                 is19version = false;
-                getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI (Spigot 1.8.X");
-            } else {
-                getLogger().log(Level.INFO, "Enabled ShinyItems! Using LightAPI (Spigot 1.9.X or greater)");
             }
+            if (!is19version) {
+                getLogger().log(Level.INFO, "You are still using lower than 1.9 version.");
+            }
+            if (version.contains("1_11")) {
+                getLogger().log(Level.INFO, "Adding v_1_11_R1 NMS Implementation to LightAPI...");
+                try {
+                    Field f = ServerModManager.class.getDeclaredField("supportImpl");
+                    f.setAccessible(true);
+                    Map<?, ?> map = (Map) f.get(null);
+                    Map<?, ?> clone = new HashMap<>(map);
+                    if (clone.containsKey("Spigot")) {
+                        clone.remove("Spigot");
+                    }
+                    if (clone.containsKey("CraftBukkit")) {
+                        clone.remove("CraftBukkit");
+                    }
+                    f.set(null, clone);
+                } catch (NoSuchFieldException e) {
+                    e.printStackTrace();
+                } catch (SecurityException e) {
+                    e.printStackTrace();
+                } catch (IllegalArgumentException e) {
+                    e.printStackTrace();
+                } catch (IllegalAccessException e) {
+                    e.printStackTrace();
+                }
+                ServerModInfo spigot = new ServerModInfo("Spigot");
+                spigot.getVersions().put("v1_8_R3", CraftBukkit_v1_8_R3.class);
+                spigot.getVersions().put("v1_9_R1", CraftBukkit_v1_9_R1.class);
+                spigot.getVersions().put("v1_9_R2", CraftBukkit_v1_9_R2.class);
+                spigot.getVersions().put("v1_10_R1", CraftBukkit_v1_10_R1.class);
+                spigot.getVersions().put("v1_11_R1", CraftBukkit_v1_11_R1.class);
+                ServerModManager.registerServerMod(spigot);
+                ServerModInfo cb = new ServerModInfo("CraftBukkit");
+                cb.getVersions().put("v1_8_R3", CraftBukkit_v1_8_R3.class);
+                cb.getVersions().put("v1_9_R1", CraftBukkit_v1_9_R1.class);
+                cb.getVersions().put("v1_9_R2", CraftBukkit_v1_9_R2.class);
+                cb.getVersions().put("v1_10_R1", CraftBukkit_v1_10_R1.class);
+                cb.getVersions().put("v1_11_R1", CraftBukkit_v1_11_R1.class);
+                ServerModManager.registerServerMod(cb);
+                ServerModManager.init();
+                getLogger().log(Level.INFO, "Injection successfull!");
+            }
+            getLogger().log(Level.INFO, "Enabled ShinyItems!");
         } else {
             getLogger().log(Level.SEVERE,
                     "LightAPI not found! Download LightAPI in order to use ShinyItems. Disabling...");
@@ -135,7 +184,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
     public void handleRemove(Player p) {
         if (lastLoc.containsKey(p.getName())) {
             instance.deleteLight(p, false);
-            if (!instance.is19version) {
+            if (!is19version) {
                 if (!instance.isLightSource(instance.getItemInHand(p))) {
                     instance.update(p);
                     lastLoc.remove(p.getName());
@@ -152,14 +201,16 @@ public class ShinyItems extends JavaPlugin implements Listener {
     }
 
     public void handleCreate(Player p) {
-        if (!instance.is19version) {
+        if (!is19version) {
             if (instance.isLightSource(instance.getItemInHand(p))) {
                 if (permsEnabled()) {
                     if (!p.hasPermission("shinyitems.use")) {
                         return;
                     }
                     if (itemPermsEnabled()) {
-                        if (!p.hasPermission("shinyitems.use." + instance.getItemInHand(p).toString().toLowerCase())) {
+                        if (!p.hasPermission("shinyitems.use."
+                                + instance.getItemInHand(p).getType().toString().toLowerCase())
+                        ) {
                             return;
                         }
                     }
@@ -177,7 +228,9 @@ public class ShinyItems extends JavaPlugin implements Listener {
                         return;
                     }
                     if (itemPermsEnabled()) {
-                        if (!p.hasPermission("shinyitems.use." + instance.getItemInHand(p).toString().toLowerCase())) {
+                        if (!p.hasPermission("shinyitems.use."
+                                + instance.getItemInHand(p).getType().toString().toLowerCase())
+                        ) {
                             return;
                         }
                     }
@@ -214,11 +267,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
     public void onDisable() {
         for (Map.Entry<String, Location> entry : lastLoc.entrySet()) {
             if (isLightAPI()) {
-                try {
-                    Lights.deleteLight(entry.getValue(), false);
-                } catch (NoClassDefFoundError e) {
-                    LightAPI.deleteLight(entry.getValue(), false);
-                }
+                LightAPI.deleteLight(entry.getValue(), false);
             } else {
                 entry.getValue().getBlock().getState().update();
             }
@@ -376,87 +425,50 @@ public class ShinyItems extends JavaPlugin implements Listener {
     }
 
     public void createLight(Location torchLoc, Player p, boolean checkToggle, boolean offHand) {
-        try {
-            if (is19version) {
-                LightDataRequest request = Lights.createLight(
-                        torchLoc,
-                        !offHand
-                                ? getLightlevel(p.getInventory().getItemInMainHand().getType())
-                                : getLightlevel(p.getInventory().getItemInOffHand().getType()),
-                        false);
-                if (request != null) {
-                    Chunks.addChunkToQueue(request);
-                }
-            } else {
-                LightDataRequest request = Lights.createLight(
-                        torchLoc,
-                        getLightlevel(p.getInventory().getItemInHand().getType()),
-                        false);
-                if (request != null) {
-                    Chunks.addChunkToQueue(request);
-                }
-            }
-        } catch (NoClassDefFoundError e) {
-            if (is19version) {
-                LightAPI.createLight(
-                        torchLoc.getWorld(),
-                        torchLoc.getBlockX(),
-                        torchLoc.getBlockY(),
-                        torchLoc.getBlockZ(),
-                        !offHand
-                                ? getLightlevel(p.getInventory().getItemInMainHand().getType())
-                                : getLightlevel(p.getInventory().getItemInOffHand().getType()),
-                        true);
-            } else {
-                LightAPI.createLight(
-                        torchLoc.getWorld(),
-                        torchLoc.getBlockX(),
-                        torchLoc.getBlockY(),
-                        torchLoc.getBlockZ(),
-                        getLightlevel(p.getInventory().getItemInHand().getType()),
-                        true);
-            }
+        if (is19version) {
+            LightAPI.createLight(
+                    torchLoc.getWorld(),
+                    torchLoc.getBlockX(),
+                    torchLoc.getBlockY(),
+                    torchLoc.getBlockZ(),
+                    !offHand
+                            ? getLightlevel(p.getInventory().getItemInMainHand().getType())
+                            : getLightlevel(p.getInventory().getItemInOffHand().getType()),
+                    true);
+        } else {
+            LightAPI.createLight(
+                    torchLoc.getWorld(),
+                    torchLoc.getBlockX(),
+                    torchLoc.getBlockY(),
+                    torchLoc.getBlockZ(),
+                    getLightlevel(p.getInventory().getItemInHand().getType()),
+                    true);
         }
     }
 
     public void update(Player p) {
         Location loc = lastLoc.get(p.getName());
-        try {
-            for (ChunkInfo info : Chunks.collectModifiedChunks(loc)) {
-                if (info != null) {
-                    Chunks.sendChunkUpdate(info);
-                }
-            }
-        } catch (NoClassDefFoundError e) {
-            for (ChunkInfo info :
-                    LightAPI.collectChunks(
-                            loc.getWorld(),
-                            loc.getBlockX(),
-                            loc.getBlockY(),
-                            loc.getBlockZ())
-            ) {
-                if (info != null) {
-                    LightAPI.updateChunk(info);
-                }
+        for (ChunkInfo info :
+                LightAPI.collectChunks(
+                        loc.getWorld(),
+                        loc.getBlockX(),
+                        loc.getBlockY(),
+                        loc.getBlockZ())
+        ) {
+            if (info != null) {
+                LightAPI.updateChunk(info);
             }
         }
     }
 
     public void deleteLight(Player p, boolean checkToggle) {
         Location loc = lastLoc.get(p.getName());
-        try {
-            LightDataRequest request = Lights.deleteLight(loc, false);
-            if (request != null) {
-                Chunks.addChunkToQueue(request);
-            }
-        } catch (NoClassDefFoundError e) {
-            LightAPI.deleteLight(
-                    loc.getWorld(),
-                    loc.getBlockX(),
-                    loc.getBlockY(),
-                    loc.getBlockZ(),
-                    true);
-        }
+        LightAPI.deleteLight(
+                loc.getWorld(),
+                loc.getBlockX(),
+                loc.getBlockY(),
+                loc.getBlockZ(),
+                true);
     }
 
     public boolean permsEnabled() {
