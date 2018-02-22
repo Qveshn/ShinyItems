@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2016 sipsi133
+ * Copyright (c) 2018 sipsi133
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -23,6 +23,7 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -35,16 +36,8 @@ import org.bukkit.scheduler.BukkitRunnable;
 import ru.beykerykt.lightapi.LightAPI;
 import ru.beykerykt.lightapi.chunks.ChunkInfo;
 
-import ru.beykerykt.lightapi.server.ServerModInfo;
-import ru.beykerykt.lightapi.server.ServerModManager;
-import ru.beykerykt.lightapi.server.nms.craftbukkit.CraftBukkit_v1_10_R1;
-import ru.beykerykt.lightapi.server.nms.craftbukkit.CraftBukkit_v1_8_R3;
-import ru.beykerykt.lightapi.server.nms.craftbukkit.CraftBukkit_v1_9_R1;
-import ru.beykerykt.lightapi.server.nms.craftbukkit.CraftBukkit_v1_9_R2;
-
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -59,11 +52,6 @@ public class ShinyItems extends JavaPlugin implements Listener {
     public List<ShinyItem> shinyItemList = new ArrayList<>();
     public static ShinyItems instance = null;
     public static boolean is19version = true;
-    private boolean lightApiEnabled = true;
-
-    public boolean isLightAPI() {
-        return lightApiEnabled;
-    }
 
     public static boolean isInteger(String s) {
         try {
@@ -94,46 +82,6 @@ public class ShinyItems extends JavaPlugin implements Listener {
             if (!is19version) {
                 getLogger().log(Level.INFO, "You are still using lower than 1.9 version.");
             }
-            if (version.contains("1_11")) {
-                getLogger().log(Level.INFO, "Adding v_1_11_R1 NMS Implementation to LightAPI...");
-                try {
-                    Field f = ServerModManager.class.getDeclaredField("supportImpl");
-                    f.setAccessible(true);
-                    Map<?, ?> map = (Map) f.get(null);
-                    Map<?, ?> clone = new HashMap<>(map);
-                    if (clone.containsKey("Spigot")) {
-                        clone.remove("Spigot");
-                    }
-                    if (clone.containsKey("CraftBukkit")) {
-                        clone.remove("CraftBukkit");
-                    }
-                    f.set(null, clone);
-                } catch (NoSuchFieldException e) {
-                    e.printStackTrace();
-                } catch (SecurityException e) {
-                    e.printStackTrace();
-                } catch (IllegalArgumentException e) {
-                    e.printStackTrace();
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-                ServerModInfo spigot = new ServerModInfo("Spigot");
-                spigot.getVersions().put("v1_8_R3", CraftBukkit_v1_8_R3.class);
-                spigot.getVersions().put("v1_9_R1", CraftBukkit_v1_9_R1.class);
-                spigot.getVersions().put("v1_9_R2", CraftBukkit_v1_9_R2.class);
-                spigot.getVersions().put("v1_10_R1", CraftBukkit_v1_10_R1.class);
-                spigot.getVersions().put("v1_11_R1", CraftBukkit_v1_11_R1.class);
-                ServerModManager.registerServerMod(spigot);
-                ServerModInfo cb = new ServerModInfo("CraftBukkit");
-                cb.getVersions().put("v1_8_R3", CraftBukkit_v1_8_R3.class);
-                cb.getVersions().put("v1_9_R1", CraftBukkit_v1_9_R1.class);
-                cb.getVersions().put("v1_9_R2", CraftBukkit_v1_9_R2.class);
-                cb.getVersions().put("v1_10_R1", CraftBukkit_v1_10_R1.class);
-                cb.getVersions().put("v1_11_R1", CraftBukkit_v1_11_R1.class);
-                ServerModManager.registerServerMod(cb);
-                ServerModManager.init();
-                getLogger().log(Level.INFO, "Injection successfull!");
-            }
             getLogger().log(Level.INFO, "Enabled ShinyItems!");
         } else {
             getLogger().log(Level.SEVERE,
@@ -162,10 +110,9 @@ public class ShinyItems extends JavaPlugin implements Listener {
             disabledPlayers.addAll((List<String>) players.getList("Toggled"));
         }
         getServer().getPluginManager().registerEvents(this, this);
-        getCommand("shinyitems").setExecutor(new Commands(this));
+        getCommand("shinyitems").setExecutor(new ShinyCommand(this));
         instance = this;
         Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new BukkitRunnable() {
-            int i = 0;
 
             @Override
             public void run() {
@@ -176,7 +123,6 @@ public class ShinyItems extends JavaPlugin implements Listener {
                     }
                     handleCreate(p);
                 }
-                ++i;
             }
         }, 100L, 10L);
     }
@@ -266,11 +212,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
     @Override
     public void onDisable() {
         for (Map.Entry<String, Location> entry : lastLoc.entrySet()) {
-            if (isLightAPI()) {
-                LightAPI.deleteLight(entry.getValue(), false);
-            } else {
-                entry.getValue().getBlock().getState().update();
-            }
+            LightAPI.deleteLight(entry.getValue(), false);
         }
         try {
             File file = new File(getDataFolder(), "toggled_players.yml");
@@ -413,11 +355,26 @@ public class ShinyItems extends JavaPlugin implements Listener {
         for (ShinyItem si : getLightSources()) {
             if (!si.getMaterial().equals(mat.getType()))
                 continue;
-            if (si.getDurability() != -1 && si.getDurability() != mat.getDurability())
+            if (si.getDurability() != -1 && si.getDurability() != mat.getDurability() && si.getDurability() != null)
                 continue;
-            if (si.isUnbreakable() && !mat.hasItemMeta())
+            if (si.isUnbreakable() && !mat.hasItemMeta() && si.getDurability() != null)
                 continue;
-            if (si.isUnbreakable() != mat.getItemMeta().spigot().isUnbreakable())
+            if (si.isUnbreakable() != mat.getItemMeta().spigot().isUnbreakable() && si.getDurability() != null)
+                continue;
+            boolean hasEnch = false;
+            if (!si.getEnchantments().isEmpty()) {
+                for (Enchantment e : si.getEnchantments()) {
+                    if (mat.containsEnchantment(e)) {
+                        hasEnch = true;
+                        break;
+                    }
+                }
+            } else {
+                if (si.getEnchantments().isEmpty() && mat.getEnchantments().keySet().isEmpty()) {
+                    hasEnch = true;
+                }
+            }
+            if (!hasEnch)
                 continue;
             return true;
         }

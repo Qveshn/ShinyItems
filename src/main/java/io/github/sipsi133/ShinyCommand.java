@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2016 sipsi133
+ * Copyright (c) 2018 sipsi133
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -23,11 +23,11 @@ import org.bukkit.command.CommandExecutor;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
-public class Commands implements CommandExecutor {
+public class ShinyCommand implements CommandExecutor {
 
     private ShinyItems plugin;
 
-    public Commands(ShinyItems plugin) {
+    public ShinyCommand(ShinyItems plugin) {
         this.plugin = plugin;
     }
 

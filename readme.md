@@ -3,7 +3,7 @@
 ShinyItems
 ==========
 Enlighten your way with shiny items.  
-Spigot plugin for Minecraft server 1.8, 1.9, 1.10, 1.11.
+Spigot plugin for Minecraft server 1.8, 1.9, 1.10, 1.11, 1.12.
 
 Original author: [sipsi133](https://github.com/sipsi133)  
 [SPIGOT RESOURCE](https://www.spigotmc.org/resources/shinyitems-1-8-x-1-12-x.12531/)
@@ -14,7 +14,7 @@ Original author: [sipsi133](https://github.com/sipsi133)
 
 >The MIT License (MIT)
 >
->Copyright (c) 2016 sipsi133
+>Copyright (c) 2018 sipsi133
 >
 >Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 >files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify,
@@ -34,12 +34,11 @@ Original author: [sipsi133](https://github.com/sipsi133)
 - [Maven](https://maven.apache.org) (version 3.0 or higher)
 - [Spigot](https://www.spigotmc.org/)
 - [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
+  / [LightAPI Fork](https://www.spigotmc.org/resources/lightapi-temporary-fork.48247/)
 
 ## Instructions to build
 
-1. Build CraftBukkit server using [BuildToolsJar.jar](https://hub.spigotmc.org/jenkins/job/BuildTools/):
-   `java -jar BuildTools.jar --rev 1.11`  
-   *It will be added to your local maven repository.*
 1. Download the appropriate version of [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
+   / [LightAPI Fork](https://www.spigotmc.org/resources/lightapi-temporary-fork.48247/)
    to the [lib](/lib) folder ([more info](/lib/readme.md))
 1. Run the command from the root folder of the project: `mvn clear install`

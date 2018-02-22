@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2016 sipsi133
+ * Copyright (c) 2018 sipsi133
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -18,24 +18,43 @@
  */
 package io.github.sipsi133;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Material;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.enchantments.Enchantment;
 
 public class ShinyItem implements ConfigurationSerializable {
 
     private Material item;
-    private int durability;
-    private boolean unbreakable;
+    private Integer durability;
+    private Boolean unbreakable;
     private int lightlevel;
+    private List<Enchantment> enchantments = new ArrayList<>();
 
-    public ShinyItem(Material item, int lightlevel, int durability, boolean unbreakable) {
+    public ShinyItem(Material item, int lightlevel, Integer durability, Boolean unbreakable,
+                     List<Enchantment> enchantments
+    ) {
         this.item = item;
         this.lightlevel = lightlevel;
         this.durability = durability;
         this.unbreakable = unbreakable;
+        this.enchantments = enchantments;
+    }
+
+    public ShinyItem(Material item, int lightlevel, Integer durability, Boolean unbreakable) {
+        this(item, lightlevel, durability, unbreakable, new ArrayList<Enchantment>());
+    }
+
+    public ShinyItem(Material item, int lightlevel, Integer durability) {
+        this(item, lightlevel, durability, null, new ArrayList<Enchantment>());
+    }
+
+    public ShinyItem(Material item, int lightlevel, Boolean unbreakable) {
+        this(item, lightlevel, null, unbreakable, new ArrayList<Enchantment>());
     }
 
     public Material getMaterial() {
@@ -46,29 +65,40 @@ public class ShinyItem implements ConfigurationSerializable {
         return lightlevel;
     }
 
-    public int getDurability() {
+    public Integer getDurability() {
         return durability;
     }
 
-    public boolean isUnbreakable() {
+    public Boolean isUnbreakable() {
         return unbreakable;
+    }
+
+    public List<Enchantment> getEnchantments() {
+        return enchantments;
     }
 
     @Override
     public Map<String, Object> serialize() {
         Map<String, Object> temp = new HashMap<>();
         temp.put("item", item.toString());
+        temp.put("lightlevel", lightlevel);
         temp.put("durability", durability);
         temp.put("unbreakable", unbreakable);
-        temp.put("lightlevel", lightlevel);
+        temp.put("enchants", enchantments);
         return temp;
     }
 
+    @SuppressWarnings("unchecked")
     public static ShinyItem deserialize(Map<String, Object> map) {
-        return new ShinyItem(
-                Material.valueOf((String) map.get("item")),
-                (Integer) map.get("lightlevel"),
-                (Integer) map.get("durability"),
-                (Boolean) map.get("unbreakable"));
+        Material mat = map.containsKey("item") ? Material.valueOf((String) map.get("item")) : null;
+        int lightlevel = (Integer) map.get("lightlevel");
+        Integer durability = map.containsKey("durability")
+                ? Integer.valueOf((int) map.get("durability"))
+                : null;
+        Boolean unbreakable = map.containsKey("unbreakable")
+                ? Boolean.valueOf((boolean) map.get("unbreakable"))
+                : null;
+        List<Enchantment> enchants = (List<Enchantment>) (map.containsKey("enchants") ? map.get("enchants") : null);
+        return new ShinyItem(mat, lightlevel, durability, unbreakable, enchants);
     }
 }
