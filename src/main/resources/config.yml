@@ -1,22 +1,41 @@
-# If enabled, players need permission shinyitems.use to see light that the items emit when held in hand.
 enable-permissions: false
 enable-item-specific-permissions: false
 distance-before-new-lightsource: 1
-
-# Material name before "=" is the material to emit light in hand. 
-# 
-# String after "=" is the light level the material will emit in hand. 
-# Valid values for this are TORCH and REDSTONE_TORCH_ON. If something else is inserted, it defaults to TORCH.
-# 
-# If only material name is inserted (no "=" or another material name) that materials light level in hand
-# defaults to TORCH.
-#
-# THIS DEFAULT CONFIGURATION IS ENOUGH FOR YOU IF YOU JUST WANT THE NORMAL LIGHT EMITING ITEMS
-# TO EMIT AN LIGHTAURA AROUND YOU WHEN HELD IN HAND.
 lightsources:
-    - REDSTONE_TORCH_ON=REDSTONE_TORCH_ON
-    - REDSTONE_TORCH_OFF=REDSTONE_TORCH_ON
-    - GLOWSTONE=TORCH
-    - TORCH=TORCH
-    - LAVA=TORCH
-    - LAVA_BUCKET=TORCH
+- ==: io.github.sipsi133.ShinyItem
+  enchants: []
+  item: REDSTONE_TORCH_ON
+  durability: -1
+  unbreakable: false
+  lightlevel: 7
+- ==: io.github.sipsi133.ShinyItem
+  enchants: []
+  item: REDSTONE_TORCH_OFF
+  durability: -1
+  unbreakable: false
+  lightlevel: 7
+- ==: io.github.sipsi133.ShinyItem
+  enchants: []
+  item: GLOWSTONE
+  durability: -1
+  unbreakable: false
+  lightlevel: 14
+- ==: io.github.sipsi133.ShinyItem
+  enchants: []
+  item: TORCH
+  durability: -1
+  unbreakable: false
+  lightlevel: 14
+- ==: io.github.sipsi133.ShinyItem
+  enchants: []
+  item: LAVA
+  durability: -1
+  unbreakable: false
+  lightlevel: 14
+- ==: io.github.sipsi133.ShinyItem
+  enchants:
+  - DURABILITY
+  item: LAVA_BUCKET
+  durability: -1
+  unbreakable: false
+  lightlevel: 14

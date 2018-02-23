@@ -99,7 +99,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
                 new ShinyItem(Material.GLOWSTONE, 14, -1, false),
                 new ShinyItem(Material.TORCH, 14, -1, false),
                 new ShinyItem(Material.LAVA, 14, -1, false),
-                new ShinyItem(Material.LAVA_BUCKET, 14, -1, false)
+                new ShinyItem(Material.LAVA_BUCKET, 14, -1, false, Arrays.asList(Enchantment.DURABILITY))
         ));
         getConfig().options().copyDefaults(true);
         getConfig().options().copyHeader(false);
@@ -370,7 +370,7 @@ public class ShinyItems extends JavaPlugin implements Listener {
                     }
                 }
             } else {
-                if (si.getEnchantments().isEmpty() && mat.getEnchantments().keySet().isEmpty()) {
+                if (mat.getEnchantments().isEmpty()) {
                     hasEnch = true;
                 }
             }

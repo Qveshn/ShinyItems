@@ -53,8 +53,16 @@ public class ShinyItem implements ConfigurationSerializable {
         this(item, lightlevel, durability, null, new ArrayList<Enchantment>());
     }
 
+    public ShinyItem(Material item, int lightlevel, Integer durability, List<Enchantment> e) {
+        this(item, lightlevel, durability, null, e);
+    }
+
     public ShinyItem(Material item, int lightlevel, Boolean unbreakable) {
         this(item, lightlevel, null, unbreakable, new ArrayList<Enchantment>());
+    }
+
+    public ShinyItem(Material item, int lightlevel, Boolean unbreakable, List<Enchantment> e) {
+        this(item, lightlevel, null, unbreakable, e);
     }
 
     public Material getMaterial() {
@@ -84,7 +92,11 @@ public class ShinyItem implements ConfigurationSerializable {
         temp.put("lightlevel", lightlevel);
         temp.put("durability", durability);
         temp.put("unbreakable", unbreakable);
-        temp.put("enchants", enchantments);
+        List<String> tmp = new ArrayList<>();
+        for (Enchantment e : enchantments) {
+            tmp.add(e.getName());
+        }
+        temp.put("enchants", tmp);
         return temp;
     }
 
@@ -94,11 +106,16 @@ public class ShinyItem implements ConfigurationSerializable {
         int lightlevel = (Integer) map.get("lightlevel");
         Integer durability = map.containsKey("durability")
                 ? Integer.valueOf((int) map.get("durability"))
-                : null;
+                : -1;
         Boolean unbreakable = map.containsKey("unbreakable")
                 ? Boolean.valueOf((boolean) map.get("unbreakable"))
-                : null;
-        List<Enchantment> enchants = (List<Enchantment>) (map.containsKey("enchants") ? map.get("enchants") : null);
+                : false;
+        List<Enchantment> enchants = new ArrayList<>();
+        if (map.containsKey("enchants")) {
+            for (String s : (List<String>) map.get("enchants")) {
+                enchants.add(Enchantment.getByName(s));
+            }
+        }
         return new ShinyItem(mat, lightlevel, durability, unbreakable, enchants);
     }
 }
