@@ -1,8 +1,9 @@
 name: ShinyItems
 main: io.github.sipsi133.ShinyItems
-author: sipsi133
+authors: [sipsi133,Qveshn]
 depend: [LightAPI]
 version: ${project.version}
+api-version: '1.13'
 commands:
    shinyitems:
       description: ShinyItems base command.

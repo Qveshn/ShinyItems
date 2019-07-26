@@ -33,22 +33,21 @@ public class ShinyCommand implements CommandExecutor {
         this.plugin = plugin;
     }
 
+    @SuppressWarnings("NullableProblems")
     @Override
     public boolean onCommand(CommandSender sender, Command cmd, String commandLabel, String[] args) {
         if (args.length == 1) {
             if (args[0].equalsIgnoreCase("reload")) {
                 if (sender.isOp() || sender.hasPermission("shinyitems.reload")) {
                     plugin.reloadConfig();
-                    plugin.shinyItemList.clear();
                     sender.sendMessage("§aShinyItems configuration reloaded!");
                 }
             } else if (args[0].equalsIgnoreCase("toggle")) {
                 if (sender.isOp() || sender.hasPermission("shinyitems.toggle") && sender instanceof Player) {
-                    if (!plugin.disabledPlayers.contains(sender.getName())) {
-                        plugin.disabledPlayers.add(sender.getName());
+                    plugin.Toggle((Player) sender);
+                    if (!plugin.isToggledOn((Player) sender)) {
                         sender.sendMessage("§cShinyitems is now disabled for you.");
                     } else {
-                        plugin.disabledPlayers.remove(sender.getName());
                         sender.sendMessage("§aShinyitems is now enabled for you.");
                     }
                 }

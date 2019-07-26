@@ -19,104 +19,268 @@
  */
 package io.github.sipsi133.engine;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import io.github.sipsi133.utils.NmsHelper;
+import io.github.sipsi133.utils.Utils;
 import org.bukkit.Material;
 import org.bukkit.configuration.serialization.ConfigurationSerializable;
+import org.bukkit.configuration.serialization.SerializableAs;
 import org.bukkit.enchantments.Enchantment;
 
+import javax.annotation.Nonnull;
+import java.util.*;
+import java.util.stream.Collectors;
+
+@SerializableAs("-=[ShinyItem]=-")
 public class ShinyItem implements ConfigurationSerializable {
 
-    private Material item;
-    private Integer durability;
-    private Boolean unbreakable;
-    private int lightlevel;
-    private List<Enchantment> enchantments = new ArrayList<>();
+    private final static String ANY_VALUE = "Any";
 
-    public ShinyItem(Material item, int lightlevel, Integer durability, Boolean unbreakable,
-                     List<Enchantment> enchantments
+    private String originalMaterialName;
+    private final Material item;
+    private final Interval<Integer> amount;
+    private final Interval<Integer> durability;
+    private final Boolean unbreakable;
+    private final List<Enchantment> enchantments;
+    private final Interval<Integer> lightLevel;
+
+    @SuppressWarnings("unused")
+    public ShinyItem(
+            Material item,
+            Interval<Integer> lightLevel
+    ) {
+        this(item, lightLevel, null);
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public ShinyItem(
+            Material item,
+            Interval<Integer> lightLevel,
+            Interval<Integer> amount
+    ) {
+        this(item, lightLevel, amount, null);
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public ShinyItem(
+            Material item,
+            Interval<Integer> lightLevel,
+            Interval<Integer> amount,
+            Interval<Integer> durability
+    ) {
+        this(item, lightLevel, amount, durability, null);
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public ShinyItem(
+            Material item,
+            Interval<Integer> lightLevel,
+            Interval<Integer> amount,
+            Interval<Integer> durability,
+            Boolean unbreakable
+    ) {
+        this(item, lightLevel, amount, durability, unbreakable, null);
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public ShinyItem(
+            Material item,
+            Interval<Integer> lightLevel,
+            Interval<Integer> amount,
+            Interval<Integer> durability,
+            Boolean unbreakable,
+            List<Enchantment> enchantments
     ) {
         this.item = item;
-        this.lightlevel = lightlevel;
-        this.durability = durability;
+        originalMaterialName = item.toString();
+        this.lightLevel = lightLevel == null ? new Interval<>(14, 14) : lightLevel;
+        this.amount = amount == null || amount.max() < 0 ? null : amount.getSorted();
+        this.durability = durability == null || durability.max() < 0 ? null : durability.getSorted();
         this.unbreakable = unbreakable;
         this.enchantments = enchantments;
     }
 
-    public ShinyItem(Material item, int lightlevel, Integer durability, Boolean unbreakable) {
-        this(item, lightlevel, durability, unbreakable, new ArrayList<Enchantment>());
-    }
-
-    public ShinyItem(Material item, int lightlevel, Integer durability) {
-        this(item, lightlevel, durability, null, new ArrayList<Enchantment>());
-    }
-
-    public ShinyItem(Material item, int lightlevel, Integer durability, List<Enchantment> e) {
-        this(item, lightlevel, durability, null, e);
-    }
-
-    public ShinyItem(Material item, int lightlevel, Boolean unbreakable) {
-        this(item, lightlevel, null, unbreakable, new ArrayList<Enchantment>());
-    }
-
-    public ShinyItem(Material item, int lightlevel, Boolean unbreakable, List<Enchantment> e) {
-        this(item, lightlevel, null, unbreakable, e);
+    // Constructor to create ShinyItem during deserialization
+    private ShinyItem(
+            String materialNames,
+            Interval<Integer> lightLevel,
+            Interval<Integer> amount,
+            Interval<Integer> durability,
+            Boolean unbreakable,
+            List<Enchantment> enchantments
+    ) {
+        Material material = null;
+        String materialName = null;
+        for (String name : materialNames.split(",")) {
+            materialName = name.trim();
+            material = Material.matchMaterial(materialName);
+            if (material != null) {
+                break;
+            }
+        }
+        if (material == null) {
+            for (String name : materialNames.split(",")) {
+                materialName = name.trim();
+                material = Utils.nullIf(NmsHelper.matchLegacyMaterial(materialName), Material.AIR);
+                if (material != null) {
+                    break;
+                }
+            }
+        }
+        this.item = material;
+        this.originalMaterialName = material != null ? materialName : materialNames;
+        this.lightLevel = lightLevel == null ? new Interval<>(14, 14) : lightLevel;
+        this.amount = amount == null || amount.max() < 0 ? null : amount.getSorted();
+        this.durability = durability == null || durability.max() < 0 ? null : durability.getSorted();
+        this.unbreakable = unbreakable;
+        this.enchantments = enchantments;
     }
 
     public Material getMaterial() {
         return item;
     }
 
-    public int getLightLevel() {
-        return lightlevel;
+    public String getOriginalMaterialName() {
+        return originalMaterialName;
     }
 
-    public Integer getDurability() {
+    @Deprecated
+    public int getLightLevel() {
+        return lightLevel.first;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public int getAirLightLevel() {
+        return lightLevel.first;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public int getWaterLightLevel() {
+        return lightLevel.second;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public Interval<Integer> getDurability() {
         return durability;
     }
 
-    public Boolean isUnbreakable() {
+    @SuppressWarnings("WeakerAccess")
+    public Interval<Integer> getAmount() {
+        return amount;
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public Boolean getUnbreakable() {
         return unbreakable;
     }
 
+    @SuppressWarnings("WeakerAccess")
     public List<Enchantment> getEnchantments() {
         return enchantments;
     }
 
     @Override
+    @Nonnull
     public Map<String, Object> serialize() {
-        Map<String, Object> temp = new HashMap<>();
+        Map<String, Object> temp = new LinkedHashMap<>();
         temp.put("item", item.toString());
-        temp.put("lightlevel", lightlevel);
-        temp.put("durability", durability);
-        temp.put("unbreakable", unbreakable);
-        List<String> tmp = new ArrayList<>();
-        for (Enchantment e : enchantments) {
-            tmp.add(e.getName());
-        }
-        temp.put("enchants", tmp);
+        temp.put("lightlevel", serialize(lightLevel));
+        temp.put("amount", serialize(amount));
+        temp.put("durability", serialize(durability));
+        temp.put("unbreakable", serialize(unbreakable));
+        temp.put("enchantments", serialize(enchantments));
         return temp;
     }
 
-    @SuppressWarnings("unchecked")
+    private Object serialize(Interval<Integer> value) {
+        return value == null ? ANY_VALUE : value.first.equals(value.second) ? value.first
+                : String.format("%d, %d", value.first, value.second);
+    }
+
+    private Object serialize(Boolean value) {
+        return value == null ? ANY_VALUE : value;
+    }
+
+    private Object serialize(Collection<Enchantment> value) {
+        return value == null ? ANY_VALUE : value.stream().map(Enchantment::getName).collect(Collectors.toList());
+    }
+
+    @SuppressWarnings("unused")
     public static ShinyItem deserialize(Map<String, Object> map) {
-        Material mat = map.containsKey("item") ? Material.valueOf((String) map.get("item")) : null;
-        int lightlevel = (Integer) map.get("lightlevel");
-        Integer durability = map.containsKey("durability")
-                ? Integer.valueOf((int) map.get("durability"))
-                : -1;
-        Boolean unbreakable = map.containsKey("unbreakable")
-                ? Boolean.valueOf((boolean) map.get("unbreakable"))
-                : false;
-        List<Enchantment> enchants = new ArrayList<>();
-        if (map.containsKey("enchants")) {
-            for (String s : (List<String>) map.get("enchants")) {
-                enchants.add(Enchantment.getByName(s));
-            }
+        String materialName = (String) map.get("item");
+        Interval<Integer> lightlevel = parseInterval(map.get("lightlevel"), new Interval<>(0));
+        Interval<Integer> amount = parseInterval(map.get("amount"));
+        Interval<Integer> durability = parseInterval(map.get("durability"));
+        Boolean unbreakable = parseBoolean(map.get("unbreakable"));
+        List<Enchantment> enchantments = parseEnchantments(map.get("enchantments"));
+        return new ShinyItem(materialName, lightlevel, amount, durability, unbreakable, enchantments);
+    }
+
+    @SuppressWarnings("unused") // for future
+    private static int[] parseIntegers(Object value, int defaultValue) {
+        if (value == null || (value instanceof String && ANY_VALUE.equalsIgnoreCase((String) value))) {
+            return new int[]{defaultValue};
         }
-        return new ShinyItem(mat, lightlevel, durability, unbreakable, enchants);
+        if (value instanceof Number) {
+            return new int[]{(int) value};
+        }
+        if (value instanceof Collection) {
+            return ((Collection<?>) value).stream().mapToInt(x -> Integer.parseInt(x.toString().trim())).toArray();
+        }
+        return Arrays.stream(value.toString().split(",")).mapToInt(x -> Integer.parseInt(x.trim())).toArray();
+    }
+
+    private static Interval<Integer> parseInterval(Object value) {
+        return parseInterval(value, null);
+    }
+
+    private static Interval<Integer> parseInterval(Object value, Interval<Integer> defaultValue) {
+        if (value == null || (value instanceof String && ANY_VALUE.equalsIgnoreCase((String) value))) {
+            return defaultValue;
+        }
+        if (value instanceof Number) {
+            return new Interval<>((int) value, (int) value);
+        }
+        int[] values;
+        if (value instanceof Collection) {
+            values = ((Collection<?>) value).stream()
+                    .mapToInt(x -> Integer.parseInt(x.toString().trim()))
+                    .toArray();
+        } else {
+            values = Arrays.stream(value.toString().split(",")).mapToInt(x -> Integer.parseInt(x.trim())).toArray();
+        }
+        return new Interval<>(values[0], values.length > 1 ? values[1] : values[0]);
+    }
+
+    private static Boolean parseBoolean(Object value) {
+        return parseBoolean(value, null);
+    }
+
+    @SuppressWarnings("SameParameterValue")
+    private static Boolean parseBoolean(Object value, Boolean defaultValue) {
+        if (value == null || (value instanceof String && ANY_VALUE.equalsIgnoreCase((String) value))) {
+            return defaultValue;
+        }
+        if (value instanceof Boolean) {
+            return (Boolean) value;
+        }
+        return Boolean.parseBoolean(value.toString().trim());
+    }
+
+    private static List<Enchantment> parseEnchantments(Object value) {
+        return parseEnchantments(value, null);
+    }
+
+    @SuppressWarnings({"unchecked", "SameParameterValue"})
+    private static List<Enchantment> parseEnchantments(Object value, List<Enchantment> defaultValue) {
+        if (value == null || (value instanceof String && ANY_VALUE.equalsIgnoreCase((String) value))
+                || !(value instanceof List)
+        ) {
+            return defaultValue;
+        }
+        List<Enchantment> enchantments = new ArrayList<>();
+        for (String enchantment : (List<String>) value) {
+            enchantments.add(Enchantment.getByName(enchantment));
+        }
+        return enchantments;
     }
 }

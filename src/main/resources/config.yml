@@ -1,41 +1,217 @@
+# ${project.artifactId} ${project.version} by sipsi133 and Qveshn
+#
+# Configuration file
+# ==================
+#
+# debug: true/false
+#   Enable/disable extra debug output for diagnostics.
+#
+# enable-permissions: true/false
+#   If true, players need permission "shinyitems.use" to use lighting items. Otherwise, all players can do it.
+#
+# enable-item-specific-permissions: true/false.
+#   If both this and enable-permissions are true, players can only use those lighting elements that are defined
+#   by the shinyitems.use.<XXX> permissions, where <XXX> is the item name in lower case according to the "item"
+#   parameter in the "lightsources" section (see below). Remember to type the permissions all in lower case.
+#
+# update-delay-ticks: <number>
+#   The delay in server ticks before refresh lighting around the players.
+#
+# lightsources: The list of shiny item structures
+#   This list defines what items should be used for lighting. The first line of each structure should
+#   contain "==: - = [ShinyItem] = -". Each structure has the following parameters:
+#   item: <name>
+#     The item name according to https://hub.spigotmc.org/javadocs/spigot/org/bukkit/Material.html.
+#     Example:
+#       item: TORCH
+#   lightlevel: <on the air [, <under water>]
+#     The level of illumination for this item. The level can take values from 0 to 15. The first level is used when
+#     the player is on the air. The second level (optionally) is used when the player is under water. The water level
+#     must be separated from air level by comma. if the second parameter is omitted, the first parameter will be used
+#     instead when the player is under water.
+#     Examples:
+#       lightlevel: 14    # The item shines equally under water and in the air.
+#       lightlevel: 14, 7 # Under water the item can shine with lower brightness.
+#       lightlevel: 0, 14 # The item can shine only under water
+#   amount: <number>[, <number>] | Any
+#     Condition for using this item. The number of items in the hand that the player must hold.
+#     The value can be a number, an interval (two numbers separated by comma) or magic word "Any" meaning any amount.
+#     Examples:
+#       amount: Any    # Any number (no matter).
+#       amount: 3      # Exactly three items should be in hand.
+#       amount: 20, 64 # The number of items must be from 20 to 64
+#   durability: <number>[, <number>] | Any
+#     Condition for using this item. The durability of the item in the hand that the player must hold.
+#     The value can be a number, an interval (two numbers separated by comma) or magic word "Any" meaning any durability.
+#     Examples:
+#       durability: Any    # Any durability (no matter).
+#       durability: 0      # The item must not be damaged
+#       durability: 0, 10  # Damage level should not exceed 10.
+#   unbreakable: true | false | | Any
+#     Condition for using this item. The unbreakable flag of the item in the hand that the player must hold.
+#     The unbreakable flag means that the item can not accept any damages at all.
+#     The value can be "true", "false" or magic word "Any" meaning any unbreakable state.
+#     Examples:
+#       unbreakable: Any    # No matter.
+#       unbreakable: true   # The item must be unbreakable
+#  enchantments: Any | <the list of enchantments>
+#     Condition for using this item. The list of enchantments, that item must have.
+#     The value can be the list of strings (enchantments) or magic word "Any" meaning no matter.
+#     If the list is defined, then the item nust contain all its enchantments. If The list is empty ([]), then
+#     the item must not contain any enchantments at all.
+#     Examples:
+#       enchantments: Any    # No matter.
+#       enchantments: []     # The item must not contain enchantments.
+#       enchantments:        # The item must have at least the following two enchantments:
+#         - FIRE_ASPECT      # "minecraft:fire_aspect"
+#         - DAMAGE_ALL       # "minecraft:sharpness"
+#
+# The Item list may contain duplicate items. The first item satisfying all conditions will be selected for lighting.
+# If the player holds in both hands shiny items, then the item with maximum lighting level will be selected.
+#
+# All conditions must be met simultaneously (item AND amount AND durability AND unbreakable AND enchantments).
+# To use the OR condition, simply repeat the structure with another conditions. This can also help to emulate
+# dynamic light levels.
+# Example:
+#   - ==: -=[ShinyItem]=-
+#     item: GLOWSTONE_DUST   # Using light level 5 when the player holds 10-30 pieces of glowstone dust.
+#     lightlevel: 5
+#     amount: 10, 30
+#     durability: Any
+#     unbreakable: Any
+#     enchantments: Any
+#   - ==: -=[ShinyItem]=-
+#     item: GLOWSTONE_DUST   # Using light level 10 when the player holds more tha 30 pieces of glowstone dust.
+#     lightlevel: 10
+#     amount: 31, 64
+#     durability: Any
+#     unbreakable: Any
+#     enchantments: Any
+
+debug: false
 enable-permissions: false
 enable-item-specific-permissions: false
-distance-before-new-lightsource: 1
+update-delay-ticks: 5
 lightsources:
-- ==: io.github.sipsi133.engine.ShinyItem
-  enchants: []
-  item: REDSTONE_TORCH_ON
-  durability: -1
-  unbreakable: false
-  lightlevel: 7
-- ==: io.github.sipsi133.engine.ShinyItem
-  enchants: []
-  item: REDSTONE_TORCH_OFF
-  durability: -1
-  unbreakable: false
-  lightlevel: 7
-- ==: io.github.sipsi133.engine.ShinyItem
-  enchants: []
+- ==: -=[ShinyItem]=-
+  item: BEACON
+  lightlevel: 15
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
   item: GLOWSTONE
-  durability: -1
-  unbreakable: false
+  lightlevel: 15
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: JACK_O_LANTERN
+  lightlevel: 15
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: SEA_LANTERN
+  lightlevel: 15
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: LANTERN
+  lightlevel: 15
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: CAMPFIRE
+  lightlevel: 15, 0
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: END_ROD
   lightlevel: 14
-- ==: io.github.sipsi133.engine.ShinyItem
-  enchants: []
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
   item: TORCH
-  durability: -1
-  unbreakable: false
-  lightlevel: 14
-- ==: io.github.sipsi133.engine.ShinyItem
-  enchants: []
-  item: LAVA
-  durability: -1
-  unbreakable: false
-  lightlevel: 14
-- ==: io.github.sipsi133.engine.ShinyItem
-  enchants:
-  - DURABILITY
+  lightlevel: 14, 0
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
   item: LAVA_BUCKET
-  durability: -1
-  unbreakable: false
-  lightlevel: 14
+  lightlevel: 14, 7
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: REDSTONE_TORCH
+  lightlevel: 7, 5
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: SEA_PICKLE
+  lightlevel: 0, 12
+  amount: 3, 64
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: SEA_PICKLE
+  lightlevel: 0, 9
+  amount: 2
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: SEA_PICKLE
+  lightlevel: 0, 6
+  amount: 1
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: MAGMA_BLOCK
+  lightlevel: 4
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: DIAMOND_SWORD
+  lightlevel: 15
+  amount: Any
+  durability: 0, 10
+  unbreakable: Any
+  enchantments:
+  - FIRE_ASPECT
+- ==: -=[ShinyItem]=-
+  item: DIAMOND_SWORD
+  lightlevel: 10
+  amount: Any
+  durability: 11, 20
+  unbreakable: Any
+  enchantments:
+  - FIRE_ASPECT
+- ==: -=[ShinyItem]=-
+  item: DIAMOND_SWORD
+  lightlevel: 5
+  amount: Any
+  durability: 21, 30
+  unbreakable: Any
+  enchantments:
+  - FIRE_ASPECT

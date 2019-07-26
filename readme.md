@@ -3,18 +3,19 @@
 ShinyItems
 ==========
 Enlighten your way with shiny items.  
-Spigot plugin for Minecraft server 1.8, 1.9, 1.10, 1.11, 1.12.
+Bukkit/Spigot plugin for Minecraft server 1.8, 1.9, 1.10, 1.11, 1.12, 1.13, 1.14.
 
-Original author: [sipsi133](https://github.com/sipsi133)  
-[SPIGOT RESOURCE](https://www.spigotmc.org/resources/shinyitems-1-8-x-1-12-x.12531/)
+Original author: [sipsi133](https://github.com/sipsi133)   
+[CONTRIBUTORS](https://github.com/Qveshn/ShinyItems/graphs/contributors)  
+[SPIGOT RESOURCE](https://www.spigotmc.org/resources/%E2%98%85shinyitems%E2%98%85-fork.69716/) ([original](https://www.spigotmc.org/resources/shinyitems-1-8-x-1-12-x.12531/))
 
-*License, source code and commits was reconstructed from [jar files](https://www.spigotmc.org/resources/shinyitems-1-8-x-1-12-x.12531/history).*
-
+*License, source code and commits for versions 1.0 - 1.6.3 was reconstructed from [jar files](https://www.spigotmc.org/resources/shinyitems-1-8-x-1-12-x.12531/history).*
+ 
 ## License
 
 >The MIT License (MIT)
 >
->Copyright (c) 2018 sipsi133
+>Copyright (c) 2018 sipsi133  
 >Copyright (c) 2019 Qveshn
 >
 >Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
@@ -33,7 +34,7 @@ Original author: [sipsi133](https://github.com/sipsi133)
 ## Dependencies
 
 - [Maven](https://maven.apache.org) (version 3.0 or higher)
-- [Spigot](https://www.spigotmc.org/)
+- [Bukkit](https://bukkit.org/) / [Spigot](https://www.spigotmc.org/)
 - [LightAPI](https://www.spigotmc.org/resources/lightapi.4510/)
   / [LightAPI Fork](https://www.spigotmc.org/resources/lightapi-temporary-fork.48247/)
 

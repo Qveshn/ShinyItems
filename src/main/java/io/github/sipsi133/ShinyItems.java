@@ -20,435 +20,203 @@
 package io.github.sipsi133;
 
 import io.github.sipsi133.commands.ShinyCommand;
+import io.github.sipsi133.engine.LightEngine;
 import io.github.sipsi133.engine.ShinyItem;
-import org.bukkit.Bukkit;
-import org.bukkit.Location;
+import io.github.sipsi133.engine.ShinyItemSelector;
+import io.github.sipsi133.lightapi.LightAPI;
+import io.github.sipsi133.lightapi.LightAPIv3;
+import io.github.sipsi133.lightapi.LightAPIv5;
+import io.github.sipsi133.utils.Debug;
+import io.github.sipsi133.utils.Utils;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.command.PluginCommand;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.configuration.serialization.ConfigurationSerialization;
-import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.HandlerList;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerQuitEvent;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.scheduler.BukkitRunnable;
-
-import ru.beykerykt.lightapi.LightAPI;
-import ru.beykerykt.lightapi.chunks.ChunkInfo;
 
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
+import java.util.Set;
 import java.util.logging.Level;
 
 public class ShinyItems extends JavaPlugin implements Listener {
 
-    private Map<String, Location> lastLoc = new HashMap<>();
-    public List<String> disabledPlayers = new ArrayList<>();
-    public List<ShinyItem> shinyItemList = new ArrayList<>();
-    public static ShinyItems instance = null;
-    public static boolean is19version = true;
+    private static ShinyItems instance = null;
+    private final Set<String> disabledPlayers = new HashSet<>();
+    private final LightEngine lightEngine;
+    private ShinyItemSelector itemSelector;
+    private LightAPI lightAPI;
 
-    public static boolean isInteger(String s) {
-        try {
-            Integer.parseInt(s);
-        } catch (NumberFormatException e) {
-            return false;
-        } catch (NullPointerException e) {
-            return false;
+    public ShinyItems() {
+        Debug.setPrefix(getName(), ChatColor.YELLOW, ChatColor.DARK_AQUA);
+
+        lightAPI = LightAPIv5.createInstance();
+        if (lightAPI == null) {
+            lightAPI = LightAPIv3.createInstance();
         }
-        return true;
+
+        ConfigurationSerialization.registerClass(ShinyItem.class);
+        lightEngine = new LightEngine(this);
+        instance = this;
     }
 
-    public boolean isToggledOn(Player p) {
-        return !disabledPlayers.contains(p.getName());
-    }
-
-    @SuppressWarnings("unchecked")
     @Override
     public void onEnable() {
-        Plugin lightapi = getServer().getPluginManager().getPlugin("LightAPI");
-        String version = Bukkit.getServer().getClass().getPackage().getName().replace(".", ",").split(",")[3];
-        if (lightapi != null) {
-            String tmp = version.split("_")[1];
-            double last = Double.valueOf(tmp);
-            if (last < 9) {
-                is19version = false;
-            }
-            if (!is19version) {
-                getLogger().log(Level.INFO, "You are still using lower than 1.9 version.");
-            }
-            getLogger().log(Level.INFO, "Enabled ShinyItems!");
-        } else {
+        if (lightAPI == null) {
             getLogger().log(Level.SEVERE,
                     "LightAPI not found! Download LightAPI in order to use ShinyItems. Disabling...");
             getServer().getPluginManager().disablePlugin(this);
+            return;
         }
-        ConfigurationSerialization.registerClass(ShinyItem.class);
-        reloadConfig();
-        getConfig().addDefault("enable-permissions", false);
-        getConfig().addDefault("enable-item-specific-permissions", false);
-        getConfig().addDefault("distance-before-new-lightsource", 1);
-        getConfig().addDefault("lightsources", Arrays.asList(
-                new ShinyItem(Material.REDSTONE_TORCH_ON, 7, -1, false),
-                new ShinyItem(Material.REDSTONE_TORCH_OFF, 7, -1, false),
-                new ShinyItem(Material.GLOWSTONE, 14, -1, false),
-                new ShinyItem(Material.TORCH, 14, -1, false),
-                new ShinyItem(Material.LAVA, 14, -1, false),
-                new ShinyItem(Material.LAVA_BUCKET, 14, -1, false, Arrays.asList(Enchantment.DURABILITY))
-        ));
-        getConfig().options().copyDefaults(true);
-        getConfig().options().copyHeader(false);
-        saveConfig();
+        getLogger().log(Level.INFO, String.format("Using LightAPI v%s", lightAPI.implementationVersion()));
+
+        PluginCommand shinyitemsCommand = getCommand("shinyitems");
+        if (shinyitemsCommand == null) {
+            getLogger().log(Level.SEVERE, "No ShinyItems command!");
+        } else {
+            shinyitemsCommand.setExecutor(new ShinyCommand(this));
+        }
+
         File file = new File(getDataFolder(), "toggled_players.yml");
         if (file.exists()) {
             YamlConfiguration players = YamlConfiguration.loadConfiguration(file);
-            disabledPlayers.addAll((List<String>) players.getList("Toggled"));
+            disabledPlayers.addAll(players.getStringList("Toggled"));
         }
+
+        reloadConfig();
+        lightEngine.start();
         getServer().getPluginManager().registerEvents(this, this);
-        getCommand("shinyitems").setExecutor(new ShinyCommand(this));
-        instance = this;
-        Bukkit.getServer().getScheduler().scheduleSyncRepeatingTask(this, new BukkitRunnable() {
-
-            @Override
-            public void run() {
-                for (Player p : Bukkit.getOnlinePlayers()) {
-                    handleRemove(p);
-                    if (!isToggledOn(p)) {
-                        return;
-                    }
-                    handleCreate(p);
-                }
-            }
-        }, 100L, 10L);
-    }
-
-    public void handleRemove(Player p) {
-        if (lastLoc.containsKey(p.getName())) {
-            instance.deleteLight(p, false);
-            if (!is19version) {
-                if (!instance.isLightSource(instance.getItemInHand(p))) {
-                    instance.update(p);
-                    lastLoc.remove(p.getName());
-                }
-            } else {
-                if (!instance.isLightSource(instance.getItemInMainHand(p))
-                        && !instance.isLightSource(instance.getItemInOffHand(p))
-                ) {
-                    instance.update(p);
-                    lastLoc.remove(p.getName());
-                }
-            }
-        }
-    }
-
-    public void handleCreate(Player p) {
-        if (!is19version) {
-            if (instance.isLightSource(instance.getItemInHand(p))) {
-                if (permsEnabled()) {
-                    if (!p.hasPermission("shinyitems.use")) {
-                        return;
-                    }
-                    if (itemPermsEnabled()) {
-                        if (!p.hasPermission("shinyitems.use."
-                                + instance.getItemInHand(p).getType().toString().toLowerCase())
-                        ) {
-                            return;
-                        }
-                    }
-                }
-                lastLoc.put(p.getName(), p.getLocation());
-                instance.createLight(p.getLocation(), p, true, false);
-                instance.update(p);
-            }
-        } else {
-            if (instance.isLightSource(instance.getItemInMainHand(p))
-                    || instance.isLightSource(instance.getItemInOffHand(p))
-            ) {
-                if (permsEnabled()) {
-                    if (!p.hasPermission("shinyitems.use")) {
-                        return;
-                    }
-                    if (itemPermsEnabled()) {
-                        if (!p.hasPermission("shinyitems.use."
-                                + instance.getItemInHand(p).getType().toString().toLowerCase())
-                        ) {
-                            return;
-                        }
-                    }
-                }
-                lastLoc.put(p.getName(), p.getLocation());
-                instance.createLight(p.getLocation(), p, true, instance.isLightSource(instance.getItemInOffHand(p)));
-                instance.update(p);
-            }
-        }
-    }
-
-    public ItemStack getItemInHand(Player p) {
-        if (p.getItemInHand() == null) {
-            return new ItemStack(Material.AIR);
-        }
-        return p.getItemInHand();
-    }
-
-    public ItemStack getItemInMainHand(Player p) {
-        if (p.getInventory().getItemInMainHand() == null) {
-            return new ItemStack(Material.AIR);
-        }
-        return p.getInventory().getItemInMainHand();
-    }
-
-    public ItemStack getItemInOffHand(Player p) {
-        if (p.getInventory().getItemInOffHand() == null) {
-            return new ItemStack(Material.AIR);
-        }
-        return p.getInventory().getItemInOffHand();
     }
 
     @Override
     public void onDisable() {
-        for (Map.Entry<String, Location> entry : lastLoc.entrySet()) {
-            LightAPI.deleteLight(entry.getValue(), false);
-        }
+        HandlerList.unregisterAll((Plugin) this);
+        lightEngine.stop();
+        File file = new File(getDataFolder(), "toggled_players.yml");
         try {
-            File file = new File(getDataFolder(), "toggled_players.yml");
-            if (file.exists()) {
-                file.delete();
-            }
-            file.createNewFile();
-            YamlConfiguration players = YamlConfiguration.loadConfiguration(file);
+            Utils.mkdirs(file.getParentFile());
+            YamlConfiguration players = new YamlConfiguration();
             players.set("Toggled", disabledPlayers);
             players.save(file);
         } catch (IOException e) {
+            getLogger().log(Level.SEVERE, "Could not save toggled players to file " + file.getName(), e);
             e.printStackTrace();
         }
     }
 
-    public static ShinyItems getInstance() {
-        return instance;
-    }
-
-    public void fixConfig() {
-        List<String> ls = getConfig().getStringList("lightsources");
-        List<String> newls = new ArrayList<>();
-        for (String s : ls) {
-            if (!isInteger(s.split("=")[1])) {
-                String str = s.split("=")[0];
-                int light = 0;
-                switch (str.toUpperCase()) {
-                    case "REDSTONE_TORCH_OFF":
-                    case "REDSTONE_TORCH_ON":
-                        light = 7;
-                        break;
-                    default:
-                        light = 14;
-                        break;
-                }
-                newls.add(str + "=" + light);
-            } else {
-                newls.add(s);
-            }
+    @Override
+    public void reloadConfig() {
+        boolean isStarted = lightEngine.isStarted();
+        HandlerList.unregisterAll((Plugin) this);
+        if (isStarted) {
+            lightEngine.stop();
         }
-        getConfig().set("lightsources", newls);
-        saveConfig();
-        reloadConfig();
+
+        super.reloadConfig();
+        Debug.setEnable(getConfig().getBoolean("debug"));
+
+        List<ShinyItem> lightSources;
+        if (!new File(this.getDataFolder(), "config.yml").exists()) {
+            getConfig().set("lightsources", lightSources = getValidLightSources(false));
+            getConfig().options().copyDefaults(true);
+            Utils.saveConfigWithHeader(this);
+        } else {
+            lightSources = getValidLightSources(true);
+        }
+        itemSelector = new ShinyItemSelector(lightSources, permsEnabled(), itemPermsEnabled());
+        lightEngine.setTaskPeriod(getConfig().getInt("update-delay-ticks"));
+        if (isStarted) {
+            lightEngine.start();
+            getServer().getPluginManager().registerEvents(this, this);
+        }
     }
 
+    @SuppressWarnings("BooleanMethodIsAlwaysInverted")
+    public boolean isToggledOn(Player p) {
+        return !disabledPlayers.contains(p.getName());
+    }
+
+    private void Toggle(Player player, boolean toggleOn) {
+        if (toggleOn) {
+            disabledPlayers.add(player.getName());
+        } else {
+            disabledPlayers.remove(player.getName());
+        }
+    }
+
+    public void Toggle(Player player) {
+        Toggle(player, !isToggledOn(player));
+    }
+
+    @SuppressWarnings("unused")
     @EventHandler
     public void onQuit(PlayerQuitEvent e) {
-        handleRemove(e.getPlayer());
+        lightEngine.remove(e.getPlayer());
     }
 
-    public boolean isValid(Player p, Location loc) {
-        Material type = loc.getBlock().getType();
-        return !type.equals(Material.WOOD_DOOR)
-                && !type.equals(Material.WOODEN_DOOR)
-                && !type.equals(Material.DARK_OAK_DOOR)
-                && !type.equals(Material.BIRCH_DOOR)
-                && !type.equals(Material.SPRUCE_DOOR)
-                && !type.equals(Material.FENCE)
-                && !type.equals(Material.FENCE_GATE)
-                && !type.equals(Material.TRAP_DOOR)
-                && !type.equals(Material.WOOD_STAIRS)
-                && !type.equals(Material.BRICK_STAIRS)
-                && !type.equals(Material.DARK_OAK_STAIRS)
-                && !type.equals(Material.BIRCH_WOOD_STAIRS)
-                && !type.equals(Material.SPRUCE_WOOD_STAIRS)
-                && !type.equals(Material.WOOD_PLATE)
-                && !type.equals(Material.STONE_PLATE)
-                && !type.equals(Material.STONE_SLAB2)
-                && !type.equals(Material.WOOD_STEP)
-                && !type.equals(Material.ACACIA_DOOR)
-                && !type.equals(Material.ACACIA_FENCE)
-                && !type.equals(Material.ACACIA_FENCE_GATE)
-                && !type.equals(Material.ACACIA_STAIRS)
-                && !type.equals(Material.WEB)
-                && !type.equals(Material.DAYLIGHT_DETECTOR)
-                && !type.equals(Material.DAYLIGHT_DETECTOR_INVERTED)
-                && !type.equals(Material.DIODE)
-                && !type.equals(Material.DIODE_BLOCK_OFF)
-                && !type.equals(Material.DIODE_BLOCK_ON)
-                && !type.equals(Material.DOUBLE_STEP)
-                && !type.equals(Material.DOUBLE_PLANT)
-                && !type.equals(Material.DOUBLE_STONE_SLAB2)
-                && !type.equals(Material.COBBLESTONE_STAIRS)
-                && !type.equals(Material.COBBLE_WALL)
-                && !type.equals(Material.SPRUCE_FENCE)
-                && !type.equals(Material.SPRUCE_FENCE_GATE)
-                && !type.equals(Material.BIRCH_FENCE)
-                && !type.equals(Material.BIRCH_FENCE_GATE)
-                && !type.equals(Material.DARK_OAK_FENCE)
-                && !type.equals(Material.DARK_OAK_FENCE_GATE)
-                && !type.equals(Material.LADDER)
-                && !type.equals(Material.SNOW)
-                && !type.equals(Material.WATER)
-                && !type.equals(Material.WATER_LILY)
-                && !type.equals(Material.LAVA)
-                && !type.equals(Material.WEB)
-                && !type.equals(Material.NETHER_BRICK_STAIRS)
-                && !type.equals(Material.NETHER_FENCE)
-                && !type.equals(Material.NETHER_WARTS)
-                && type.equals(Material.AIR)
-                &&
-                (p.getEyeLocation().getBlockY() >= loc.getBlockY()
-                        || loc.clone().add(0, -1, 0).getBlock().getType().equals(Material.AIR));
-    }
-
-    public Location fakeTorchLoc(Player p, Location to) {
-        Location loc = to.clone().add(0, 3, 0);
-        if (isValid(p, loc)) {
-            return loc;
-        }
-        loc = to.clone().add(0, 2, 0);
-        if (isValid(p, loc)) {
-            return loc;
-        }
-        loc = to;
-        if (isValid(p, loc)) {
-            return loc;
-        }
-        loc = to.clone().add(0, 1, 0);
-        if (isValid(p, loc)) {
-            return loc;
-        }
-        loc = to.clone().add(0, 2, 0);
-        return loc;
-    }
-
-    public List<ShinyItem> getLightSources() {
-        if (shinyItemList.isEmpty()) {
-            List<ShinyItem> list = new ArrayList<>();
-            for (Object s : getConfig().getList("lightsources")) {
-                list.add((ShinyItem) s);
-            }
-            shinyItemList = list;
-            return shinyItemList;
-        }
-        return shinyItemList;
-    }
-
-    public boolean isLightSource(ItemStack mat) {
-        for (ShinyItem si : getLightSources()) {
-            if (!si.getMaterial().equals(mat.getType()))
-                continue;
-            if (si.getDurability() != -1 && si.getDurability() != mat.getDurability() && si.getDurability() != null)
-                continue;
-            if (si.isUnbreakable() && !mat.hasItemMeta() && si.getDurability() != null)
-                continue;
-            if (si.isUnbreakable() != mat.getItemMeta().spigot().isUnbreakable() && si.getDurability() != null)
-                continue;
-            boolean hasEnch = false;
-            if (!si.getEnchantments().isEmpty()) {
-                for (Enchantment e : si.getEnchantments()) {
-                    if (mat.containsEnchantment(e)) {
-                        hasEnch = true;
-                        break;
+    private List<ShinyItem> getValidLightSources(boolean warnings) {
+        List<ShinyItem> list = new ArrayList<>();
+        List<?> lightSources = getConfig().getList("lightsources");
+        if (lightSources == null) {
+            getLogger().log(Level.SEVERE, "No lightsources in config.yml!");
+        } else {
+            for (Object s : lightSources) {
+                if (s instanceof ShinyItem) {
+                    ShinyItem item = (ShinyItem) s;
+                    Material material = item.getMaterial();
+                    if (material != null) {
+                        String materialName;
+                        String originalName;
+                        if (warnings && !(materialName = material.toString())
+                                .equalsIgnoreCase(originalName = item.getOriginalMaterialName())
+                        ) {
+                            getLogger().log(Level.WARNING,
+                                    String.format("Material %s has been converted to %s", originalName, materialName));
+                        }
+                        list.add(item);
+                    } else if (warnings) {
+                        getLogger().log(Level.SEVERE,
+                                String.format("Bad material name: %s", item.getOriginalMaterialName()));
                     }
                 }
-            } else {
-                if (mat.getEnchantments().isEmpty()) {
-                    hasEnch = true;
-                }
-            }
-            if (!hasEnch)
-                continue;
-            return true;
-        }
-        return false;
-    }
-
-    public void createLight(Location torchLoc, Player p, boolean checkToggle, boolean offHand) {
-        if (is19version) {
-            LightAPI.createLight(
-                    torchLoc.getWorld(),
-                    torchLoc.getBlockX(),
-                    torchLoc.getBlockY(),
-                    torchLoc.getBlockZ(),
-                    !offHand
-                            ? getLightlevel(p.getInventory().getItemInMainHand().getType())
-                            : getLightlevel(p.getInventory().getItemInOffHand().getType()),
-                    true);
-        } else {
-            LightAPI.createLight(
-                    torchLoc.getWorld(),
-                    torchLoc.getBlockX(),
-                    torchLoc.getBlockY(),
-                    torchLoc.getBlockZ(),
-                    getLightlevel(p.getInventory().getItemInHand().getType()),
-                    true);
-        }
-    }
-
-    public void update(Player p) {
-        Location loc = lastLoc.get(p.getName());
-        for (ChunkInfo info :
-                LightAPI.collectChunks(
-                        loc.getWorld(),
-                        loc.getBlockX(),
-                        loc.getBlockY(),
-                        loc.getBlockZ())
-        ) {
-            if (info != null) {
-                LightAPI.updateChunk(info);
             }
         }
+        return list;
     }
 
-    public void deleteLight(Player p, boolean checkToggle) {
-        Location loc = lastLoc.get(p.getName());
-        LightAPI.deleteLight(
-                loc.getWorld(),
-                loc.getBlockX(),
-                loc.getBlockY(),
-                loc.getBlockZ(),
-                true);
-    }
-
-    public boolean permsEnabled() {
+    private boolean permsEnabled() {
         return getConfig().getBoolean("enable-permissions");
     }
 
-    public boolean itemPermsEnabled() {
+    private boolean itemPermsEnabled() {
         return getConfig().getBoolean("enable-item-specific-permissions");
     }
 
-    public int getDistanceToPrevious() {
-        return getConfig().getInt("distance-before-new-lightsource");
+    public LightAPI getLightAPI() {
+        return lightAPI;
     }
 
-    public int getLightlevel(Material mat) {
-        for (ShinyItem si : getLightSources()) {
-            if (si.getMaterial().equals(mat)) {
-                return si.getLightLevel();
-            }
-        }
-        return 14;
+    public ShinyItemSelector getItemSelector() {
+        return itemSelector;
+    }
+
+    @SuppressWarnings("unused")
+    public LightEngine getLightEngine() {
+        return lightEngine;
+    }
+
+    @SuppressWarnings("unused")
+    public static ShinyItems getInstance() {
+        return instance;
     }
 }
