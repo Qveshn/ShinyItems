@@ -2,37 +2,37 @@ enable-permissions: false
 enable-item-specific-permissions: false
 distance-before-new-lightsource: 1
 lightsources:
-- ==: io.github.sipsi133.ShinyItem
+- ==: io.github.sipsi133.engine.ShinyItem
   enchants: []
   item: REDSTONE_TORCH_ON
   durability: -1
   unbreakable: false
   lightlevel: 7
-- ==: io.github.sipsi133.ShinyItem
+- ==: io.github.sipsi133.engine.ShinyItem
   enchants: []
   item: REDSTONE_TORCH_OFF
   durability: -1
   unbreakable: false
   lightlevel: 7
-- ==: io.github.sipsi133.ShinyItem
+- ==: io.github.sipsi133.engine.ShinyItem
   enchants: []
   item: GLOWSTONE
   durability: -1
   unbreakable: false
   lightlevel: 14
-- ==: io.github.sipsi133.ShinyItem
+- ==: io.github.sipsi133.engine.ShinyItem
   enchants: []
   item: TORCH
   durability: -1
   unbreakable: false
   lightlevel: 14
-- ==: io.github.sipsi133.ShinyItem
+- ==: io.github.sipsi133.engine.ShinyItem
   enchants: []
   item: LAVA
   durability: -1
   unbreakable: false
   lightlevel: 14
-- ==: io.github.sipsi133.ShinyItem
+- ==: io.github.sipsi133.engine.ShinyItem
   enchants:
   - DURABILITY
   item: LAVA_BUCKET
