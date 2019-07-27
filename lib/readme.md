@@ -8,6 +8,7 @@ Download the appropriate plugin version and rename it properly according to the 
 
 | Version | Date         | File to download and rename to |
 |---------|--------------|--------------------------------|
+| 5.0.0 [*](#footnonote1) | May 15, 2019 | [LightAPI-Bukkit-5.0.0.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=273691) |
 | 3.2.8   | May 15, 2019 | [LightAPI-3.2.8.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=273691) |
 | 3.2.7   | May 7, 2019  | [LightAPI-3.2.7.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=272445) |
 | 3.2.6   | Mar 20, 2019 | [LightAPI-3.2.6.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=265539) |
@@ -29,10 +30,15 @@ Download the appropriate plugin version and rename it properly according to the 
 | 1.1     | Mar 15, 2015 | [LightAPI-1.1.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=17109) |
 | 1.0     | Mar 1, 2015  | [LightAPI-1.0.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=15614) |
 
+<a name="footnonote1">*</a> 5.0.0 is not yet released. It is pre-release version. Use 3.2.8 as 5.0.0. This allows you to at least build the project.  
+Urls [LightAPI-Bukkit-5.0.0.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=273691) and
+[LightAPI-3.2.8.jar](https://www.spigotmc.org/resources/lightapi.4510/download?version=273691) are currently identical..
+
 ## [LightAPI Fork](https://www.spigotmc.org/resources/lightapi-fork.48247/history)
 
 | Version      | Date         | File to download and rename to |
 |--------------|--------------|--------------------------------|
+| 3.3.1        | Jul 27, 2019 | [LightAPI-fork-3.3.1.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=285950) |
 | 3.3.0        | Jul 26, 2019 | [LightAPI-fork-3.3.0.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=285800) |
 | 3.2.9        | Dec 15, 2018 | [LightAPI-fork-3.2.9.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=252503) |
 | 3.2.8        | Dec 15, 2018 | [LightAPI-fork-3.2.8.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=252487) |

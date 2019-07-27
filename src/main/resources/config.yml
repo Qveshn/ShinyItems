@@ -122,6 +122,13 @@ lightsources:
   unbreakable: Any
   enchantments: Any
 - ==: -=[ShinyItem]=-
+  item: CONDUIT
+  lightlevel: 15
+  amount: Any
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
   item: LANTERN
   lightlevel: 15
   amount: Any
@@ -157,7 +164,7 @@ lightsources:
   unbreakable: Any
   enchantments: Any
 - ==: -=[ShinyItem]=-
-  item: REDSTONE_TORCH
+  item: REDSTONE_TORCH_ON
   lightlevel: 7, 5
   amount: Any
   durability: Any
@@ -165,8 +172,15 @@ lightsources:
   enchantments: Any
 - ==: -=[ShinyItem]=-
   item: SEA_PICKLE
+  lightlevel: 0, 15
+  amount: 4, 64
+  durability: Any
+  unbreakable: Any
+  enchantments: Any
+- ==: -=[ShinyItem]=-
+  item: SEA_PICKLE
   lightlevel: 0, 12
-  amount: 3, 64
+  amount: 3
   durability: Any
   unbreakable: Any
   enchantments: Any
@@ -185,7 +199,7 @@ lightsources:
   unbreakable: Any
   enchantments: Any
 - ==: -=[ShinyItem]=-
-  item: MAGMA_BLOCK
+  item: MAGMA
   lightlevel: 4
   amount: Any
   durability: Any

@@ -63,8 +63,11 @@ public class ShinyItemSelector {
             if (item != null) {
                 int air = item.getAirLightLevel();
                 int water = item.getWaterLightLevel();
-                if (level < air && level < water) {
-                    level = air == water || ((isLiquid == null || !isLiquid) && !isInWater(player)) ? air : water;
+                if (level < air || level < water) {
+                    int value = air == water || !(isLiquid == null ? isInWater(player) : isLiquid) ? air : water;
+                    if (level < value) {
+                        level = value;
+                    }
                 }
             }
         }

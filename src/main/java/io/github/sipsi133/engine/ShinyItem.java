@@ -26,7 +26,6 @@ import org.bukkit.configuration.serialization.ConfigurationSerializable;
 import org.bukkit.configuration.serialization.SerializableAs;
 import org.bukkit.enchantments.Enchantment;
 
-import javax.annotation.Nonnull;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -179,7 +178,6 @@ public class ShinyItem implements ConfigurationSerializable {
     }
 
     @Override
-    @Nonnull
     public Map<String, Object> serialize() {
         Map<String, Object> temp = new LinkedHashMap<>();
         temp.put("item", item.toString());
