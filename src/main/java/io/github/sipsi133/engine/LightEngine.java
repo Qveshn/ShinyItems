@@ -108,7 +108,7 @@ public class LightEngine {
     private void update(Player player, boolean deleteLight) {
         Location oldLocation = playersLastLocations.get(player);
         Location newLocation = deleteLight ? null : Utils.toValidBlockLocation(player.getEyeLocation());
-        int newLightLevel = newLocation == null || !plugin.isToggledOn(player)
+        int newLightLevel = newLocation == null || !plugin.isLightsOn(player)
                 ? 0 : plugin.getItemSelector().getLightLevel(player);
 
         if (oldLocation != null && !oldLocation.equals(newLocation)) {

@@ -44,11 +44,10 @@ public class ShinyCommand implements CommandExecutor {
                 }
             } else if (args[0].equalsIgnoreCase("toggle")) {
                 if (sender.isOp() || sender.hasPermission("shinyitems.toggle") && sender instanceof Player) {
-                    plugin.Toggle((Player) sender);
-                    if (!plugin.isToggledOn((Player) sender)) {
-                        sender.sendMessage("§cShinyitems is now disabled for you.");
-                    } else {
+                    if (plugin.toggleLights((Player) sender)) {
                         sender.sendMessage("§aShinyitems is now enabled for you.");
+                    } else {
+                        sender.sendMessage("§cShinyitems is now disabled for you.");
                     }
                 }
             }

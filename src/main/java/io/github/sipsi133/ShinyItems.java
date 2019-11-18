@@ -52,7 +52,8 @@ import java.util.logging.Level;
 public class ShinyItems extends JavaPlugin implements Listener {
 
     private static ShinyItems instance = null;
-    private final Set<String> disabledPlayers = new HashSet<>();
+    private boolean dbLightsAsAllowed = false;
+    private final Set<String> lightingPlayers = new HashSet<>();
     private final LightEngine lightEngine;
     private ShinyItemSelector itemSelector;
     private LightAPI lightAPI;
@@ -87,31 +88,33 @@ public class ShinyItems extends JavaPlugin implements Listener {
             shinyitemsCommand.setExecutor(new ShinyCommand(this));
         }
 
-        File file = new File(getDataFolder(), "toggled_players.yml");
+        File file = new File(getDataFolder(), "database.yml");
         if (file.exists()) {
             YamlConfiguration players = YamlConfiguration.loadConfiguration(file);
-            disabledPlayers.addAll(players.getStringList("Toggled"));
+            lightingPlayers.addAll(players.getStringList("lights"));
         }
 
         reloadConfig();
         lightEngine.start();
         getServer().getPluginManager().registerEvents(this, this);
+        Debug.print("ShinyItems is enabled");
     }
 
     @Override
     public void onDisable() {
         HandlerList.unregisterAll((Plugin) this);
         lightEngine.stop();
-        File file = new File(getDataFolder(), "toggled_players.yml");
+        File file = new File(getDataFolder(), "database.yml");
         try {
             Utils.mkdirs(file.getParentFile());
             YamlConfiguration players = new YamlConfiguration();
-            players.set("Toggled", disabledPlayers);
+            players.set("lights", new ArrayList<>(lightingPlayers));
             players.save(file);
         } catch (IOException e) {
-            getLogger().log(Level.SEVERE, "Could not save toggled players to file " + file.getName(), e);
+            getLogger().log(Level.SEVERE, "Could not save database to file " + file.getName(), e);
             e.printStackTrace();
         }
+        Debug.print("ShinyItems is disabled");
     }
 
     @Override
@@ -124,6 +127,8 @@ public class ShinyItems extends JavaPlugin implements Listener {
 
         super.reloadConfig();
         Debug.setEnable(getConfig().getBoolean("debug"));
+
+        dbLightsAsAllowed = getConfig().getBoolean("db-lights-as-allowed", dbLightsAsAllowed);
 
         List<ShinyItem> lightSources;
         if (!new File(this.getDataFolder(), "config.yml").exists()) {
@@ -142,20 +147,22 @@ public class ShinyItems extends JavaPlugin implements Listener {
     }
 
     @SuppressWarnings("BooleanMethodIsAlwaysInverted")
-    public boolean isToggledOn(Player p) {
-        return !disabledPlayers.contains(p.getName());
+    public boolean isLightsOn(Player p) {
+        return dbLightsAsAllowed == lightingPlayers.contains(p.getName());
     }
 
-    private void Toggle(Player player, boolean toggleOn) {
-        if (toggleOn) {
-            disabledPlayers.add(player.getName());
+    @SuppressWarnings("WeakerAccess")
+    public boolean toggleLights(Player player, boolean toggleOn) {
+        if (dbLightsAsAllowed == toggleOn) {
+            lightingPlayers.add(player.getName());
         } else {
-            disabledPlayers.remove(player.getName());
+            lightingPlayers.remove(player.getName());
         }
+        return toggleOn;
     }
 
-    public void Toggle(Player player) {
-        Toggle(player, !isToggledOn(player));
+    public boolean toggleLights(Player player) {
+        return toggleLights(player, !isLightsOn(player));
     }
 
     @SuppressWarnings("unused")

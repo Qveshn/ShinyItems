@@ -92,6 +92,7 @@ debug: false
 enable-permissions: false
 enable-item-specific-permissions: false
 update-delay-ticks: 5
+db-lights-as-allowed: false
 lightsources:
 - ==: -=[ShinyItem]=-
   item: BEACON
