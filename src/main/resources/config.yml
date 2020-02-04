@@ -6,10 +6,10 @@
 # debug: true/false
 #   Enable/disable extra debug output for diagnostics.
 #
-# enable-permissions: true/false
+# enable-permissions: true | false
 #   If true, players need permission "shinyitems.use" to use lighting items. Otherwise, all players can do it.
 #
-# enable-item-specific-permissions: true/false.
+# enable-item-specific-permissions: true | false
 #   If both this and enable-permissions are true, players can only use those lighting elements that are defined
 #   by the shinyitems.use.<XXX> permissions, where <XXX> is the item name in lower case according to the "item"
 #   parameter in the "lightsources" section (see below). Remember to type the permissions all in lower case.
@@ -17,6 +17,28 @@
 # update-delay-ticks: <number>
 #   The delay in server ticks before refresh lighting around the players.
 #
+# db-lights-as-allowed: true/false
+#   Affects the default state of enabling shiny items for the player (the player who has never used the command
+#   "/shinyitems toggle"). If true, then shiny items are disabled for the player by default. Otherwise, enabled.
+#   The default value is false (shiny items are enabled for the player by default)
+#
+# water-height-method: MODERN | OLD | AUTO
+#   The method for determining the height of the water to check whether the player is under water or not (when
+#   Minecraft begins an underwater rendering style).
+#     MODERN - Uses the algorithm of Minecraft 1.14 and above (more accurately).
+#     OLD    - Uses the algorithm of Minecraft below 1.14.
+#     AUTO   - Uses MODERN or OLD according to the Minecraft version.
+#   =========================== Details ===========================
+#   There are 8 levels that water can have.
+#   Minecraft renders water as block with 9 layers (1/9 block height per layer).
+#   The first layer (height = 1.00000) is always air until there is no water in the block above.
+#   The second layer (height = 0.88889) corresponds to the first water level.
+#   The third layer (height = 0.77778) corresponds to the second water level etc.
+#   The ninth layer (height = 0.11111) corresponds to the eighth water level.
+#
+#   Minecraft 1.14 and above switches the rendering to an underwater style at the height of the water layer.
+#   Minecraft below 1.14 switches the rendering to an underwater style at the height of one layer above (+0,11111).
+#   ===============================================================
 # lightsources: The list of shiny item structures
 #   This list defines what items should be used for lighting. The first line of each structure should
 #   contain "==: - = [ShinyItem] = -". Each structure has the following parameters:
@@ -47,7 +69,7 @@
 #       durability: Any    # Any durability (no matter).
 #       durability: 0      # The item must not be damaged
 #       durability: 0, 10  # Damage level should not exceed 10.
-#   unbreakable: true | false | | Any
+#   unbreakable: true | false | Any
 #     Condition for using this item. The unbreakable flag of the item in the hand that the player must hold.
 #     The unbreakable flag means that the item can not accept any damages at all.
 #     The value can be "true", "false" or magic word "Any" meaning any unbreakable state.
@@ -93,6 +115,7 @@ enable-permissions: false
 enable-item-specific-permissions: false
 update-delay-ticks: 5
 db-lights-as-allowed: false
+water-height-method: AUTO
 lightsources:
 - ==: -=[ShinyItem]=-
   item: BEACON
@@ -165,7 +188,7 @@ lightsources:
   unbreakable: Any
   enchantments: Any
 - ==: -=[ShinyItem]=-
-  item: REDSTONE_TORCH_ON
+  item: REDSTONE_TORCH, REDSTONE_TORCH_ON
   lightlevel: 7, 5
   amount: Any
   durability: Any

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2019 Qveshn
+ * Copyright (c) 2020 Qveshn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -20,6 +20,10 @@ package io.github.sipsi133.utils;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.block.Block;
+import org.bukkit.block.data.BlockData;
+import org.bukkit.block.data.Levelled;
+import org.bukkit.block.data.Waterlogged;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.ItemMeta;
@@ -102,6 +106,23 @@ public class NmsHelper {
         return nmsPrefix;
     }
 
+    private static String nmsPaddedPrefix;
+
+    private static String nmsPaddedPrefix(String prefix) {
+        return Utils.leftPad(prefix, "\\d+", '0', 8);
+    }
+
+    private static String nmsPaddedPrefix() {
+        if (nmsPaddedPrefix == null) {
+            nmsPaddedPrefix = nmsPaddedPrefix(nmsPrefix());
+        }
+        return nmsPaddedPrefix;
+    }
+
+    public static int nmsCompareTo(String nmsVersion) {
+        return nmsPaddedPrefix().compareTo(nmsPaddedPrefix(nmsVersion));
+    }
+
     private static Class<?> classCraftItemStack;
     private static Method methodAsNMSCopy;
     private static Method methodGetTag;
@@ -166,5 +187,50 @@ public class NmsHelper {
 
     public static boolean isItemUnbreakable(ItemStack itemStack) {
         return itemStack.hasItemMeta() ? isItemUnbreakable.apply(itemStack) : false;
+    }
+
+    private static Function<Block, Boolean> isWaterlogged = (block) -> {
+        // ((Waterlogged) blockData).isWaterlogged()
+        try {
+            Class.forName("org.bukkit.block.data.Waterlogged");
+            return (isWaterlogged = (x) -> {
+                BlockData blockData = x.getBlockData();
+                return blockData instanceof Waterlogged && ((Waterlogged) blockData).isWaterlogged();
+            }).apply(block);
+        } catch (ClassNotFoundException ignore) {
+        }
+        // false
+        return (isWaterlogged = (x) -> false).apply(block);
+    };
+
+    public static boolean isWaterlogged(Block block) {
+        return isWaterlogged.apply(block);
+    }
+
+    private static Function<Block, Integer> getBlockLevel = (block) -> {
+        // ((Levelled) blockData).getLevel()
+        try {
+            Class.forName("org.bukkit.block.data.Levelled");
+            return (getBlockLevel = (x) -> {
+                BlockData blockData = x.getBlockData();
+                return blockData instanceof Levelled ? ((Levelled) blockData).getLevel() : 0;
+            }).apply(block);
+        } catch (ClassNotFoundException ignore) {
+        }
+        // block.getData()
+        return (getBlockLevel = (x) -> (int) x.getData()).apply(block);
+    };
+
+    public static int getBlockLevel(Block block) {
+        return getBlockLevel.apply(block);
+    }
+
+    private static Function<Double, Boolean> isValidY = (Y) -> (isValidY = nmsCompareTo("v1_14_R1") < 0
+            ? (y) -> y >= 0 && y < 256
+            : (y) -> y >= 0 - 16 && y < 256 + 16).apply(Y);
+
+    @SuppressWarnings("WeakerAccess")
+    public static boolean isValidY(double y) {
+        return isValidY.apply(y);
     }
 }

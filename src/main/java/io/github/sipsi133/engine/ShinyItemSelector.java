@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2019 Qveshn
+ * Copyright (c) 2020 Qveshn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -35,14 +35,20 @@ public class ShinyItemSelector {
     private final Map<Material, List<ShinyItem>> mapToItem = new HashMap<>();
     private final boolean permsEnabled;
     private final boolean itemPermsEnabled;
+    private final WaterHeightMethod waterHeightMethod;
 
-    public ShinyItemSelector(List<ShinyItem> items, boolean permsEnabled, boolean itemPermsEnabled) {
+    public ShinyItemSelector(
+            List<ShinyItem> items,
+            boolean permsEnabled,
+            boolean itemPermsEnabled,
+            WaterHeightMethod waterHeightMethod) {
         for (ShinyItem item : items) {
             List<ShinyItem> materialItems = mapToItem.computeIfAbsent(item.getMaterial(), k -> new ArrayList<>());
             materialItems.add(item);
         }
         this.permsEnabled = permsEnabled;
         this.itemPermsEnabled = itemPermsEnabled;
+        this.waterHeightMethod = waterHeightMethod;
     }
 
     @SuppressWarnings("WeakerAccess")
@@ -75,7 +81,7 @@ public class ShinyItemSelector {
     }
 
     private boolean isInWater(Player player) {
-        return player.getEyeLocation().getBlock().isLiquid();
+        return waterHeightMethod.isInWater(player.getEyeLocation());
     }
 
     private ShinyItem getLightlevelForPlayer(Player player, ItemStack itemStack) {

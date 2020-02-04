@@ -6,7 +6,7 @@
 
     <groupId>io.github.sipsi133</groupId>
     <artifactId>ShinyItems</artifactId>
-    <version>1.7.2</version>
+    <version>1.7.3</version>
 
     <properties>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -25,14 +25,14 @@
         <dependency>
             <groupId>org.bukkit</groupId>
             <artifactId>bukkit</artifactId>
-            <version>1.14.4-R0.1-SNAPSHOT</version>
+            <version>1.15.2-R0.1-SNAPSHOT</version>
         </dependency>
         <dependency>
             <groupId>ru.beykerykt</groupId>
             <artifactId>lightapi-fork</artifactId>
-            <version>3.3.1-fork</version>
+            <version>3.4.2-fork</version>
             <scope>system</scope>
-            <systemPath>${project.basedir}/lib/LightAPI-fork-3.3.1.jar</systemPath>
+            <systemPath>${project.basedir}/lib/LightAPI-fork-3.4.2.jar</systemPath>
         </dependency>
         <dependency>
             <groupId>ru.beykerykt</groupId>

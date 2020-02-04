@@ -2,7 +2,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2018 sipsi133
- * Copyright (c) 2019 Qveshn
+ * Copyright (c) 2020 Qveshn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -23,6 +23,7 @@ import io.github.sipsi133.commands.ShinyCommand;
 import io.github.sipsi133.engine.LightEngine;
 import io.github.sipsi133.engine.ShinyItem;
 import io.github.sipsi133.engine.ShinyItemSelector;
+import io.github.sipsi133.engine.WaterHeightMethod;
 import io.github.sipsi133.lightapi.LightAPI;
 import io.github.sipsi133.lightapi.LightAPIv3;
 import io.github.sipsi133.lightapi.LightAPIv5;
@@ -44,6 +45,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -138,7 +140,11 @@ public class ShinyItems extends JavaPlugin implements Listener {
         } else {
             lightSources = getValidLightSources(true);
         }
-        itemSelector = new ShinyItemSelector(lightSources, permsEnabled(), itemPermsEnabled());
+        String method = getConfig().getString("water-height-method");
+        WaterHeightMethod waterHeightMethod = Arrays.stream(WaterHeightMethod.values())
+                .filter(x -> x.name().equalsIgnoreCase(method))
+                .findFirst().orElse(WaterHeightMethod.AUTO);
+        itemSelector = new ShinyItemSelector(lightSources, permsEnabled(), itemPermsEnabled(), waterHeightMethod);
         lightEngine.setTaskPeriod(getConfig().getInt("update-delay-ticks"));
         if (isStarted) {
             lightEngine.start();

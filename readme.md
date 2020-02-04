@@ -3,7 +3,7 @@
 ShinyItems
 ==========
 Enlighten your way with shiny items.  
-Bukkit/Spigot plugin for Minecraft server 1.8, 1.9, 1.10, 1.11, 1.12, 1.13, 1.14.
+Bukkit/Spigot plugin for Minecraft server 1.8, 1.9, 1.10, 1.11, 1.12, 1.13, 1.14, 1.15.
 
 Original author: [sipsi133](https://github.com/sipsi133)   
 [CONTRIBUTORS](https://github.com/Qveshn/ShinyItems/graphs/contributors)  
@@ -16,7 +16,7 @@ Original author: [sipsi133](https://github.com/sipsi133)
 >The MIT License (MIT)
 >
 >Copyright (c) 2018 sipsi133  
->Copyright (c) 2019 Qveshn
+>Copyright (c) 2020 Qveshn
 >
 >Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation
 >files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify,

@@ -38,6 +38,10 @@ Urls [LightAPI-Bukkit-5.0.0.jar](https://www.spigotmc.org/resources/lightapi.451
 
 | Version      | Date         | File to download and rename to |
 |--------------|--------------|--------------------------------|
+| 3.4.2        | Dec 18, 2019 | [LightAPI-fork-3.4.2.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=305658) |
+| 3.4.1        | Oct 2, 2019  | [LightAPI-fork-3.4.1.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=296330) |
+| 3.4.0        | Sep 14, 2019 | [LightAPI-fork-3.4.0.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=293916) |
+| 3.3.2        | Sep 3, 2019  | [LightAPI-fork-3.3.2.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=292349) |
 | 3.3.1        | Jul 27, 2019 | [LightAPI-fork-3.3.1.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=285950) |
 | 3.3.0        | Jul 26, 2019 | [LightAPI-fork-3.3.0.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=285800) |
 | 3.2.9        | Dec 15, 2018 | [LightAPI-fork-3.2.9.jar](https://www.spigotmc.org/resources/lightapi-fork.48247/download?version=252503) |

@@ -1,7 +1,7 @@
 /*
  * The MIT License (MIT)
  *
- * Copyright (c) 2019 Qveshn
+ * Copyright (c) 2020 Qveshn
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated
  * documentation files (the "Software"), to deal in the Software without restriction, including without limitation
@@ -24,6 +24,8 @@ import org.bukkit.plugin.java.JavaPlugin;
 import java.io.*;
 import java.nio.charset.StandardCharsets;
 import java.util.logging.Level;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Utils {
 
@@ -31,7 +33,7 @@ public class Utils {
         double x, y, z;
         return (x = location.getX()) >= -30000000 && x < 30000000
                 && (z = location.getZ()) >= -30000000 && z < 30000000
-                && (y = location.getY()) >= 0 - 16 && y < 256 + 16;
+                && NmsHelper.isValidY(location.getY());
     }
 
     private static Location toBlockLocation(Location location) {
@@ -95,5 +97,25 @@ public class Utils {
         } catch (IOException e) {
             plugin.getLogger().log(Level.SEVERE, "Could not save config to " + config.getName(), e);
         }
+    }
+
+    @SuppressWarnings("WeakerAccess")
+    public static String leftPad(String text, String regex, char padCharacter, int width) {
+        StringBuilder sb = new StringBuilder();
+        Matcher m = Pattern.compile(regex).matcher(text);
+        String chars = String.format("%" + width + "s", "").replace(' ', padCharacter);
+        int last = 0;
+        while (m.find()) {
+            int start = m.start();
+            int n = m.end() - start;
+            if (n < width) {
+                sb.append(text, last, start);
+                sb.append(chars, n, width);
+                last = start;
+            }
+        }
+        if (last == 0) return text;
+        if (last < text.length()) sb.append(text, last, text.length());
+        return sb.toString();
     }
 }
